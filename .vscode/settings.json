@@ -16,8 +16,10 @@
   "files.exclude": {
     "**/.git": true,
     "**/node_modules": true,
+    "**/dist": true,
     "**/playwright-report": true,
-    "**/test-results": true
+    "**/test-results": true,
+    "**/var": true
   },
   "search.exclude": {
     "**/node_modules": true,
@@ -25,6 +27,15 @@
     "**/playwright-report": true,
     "**/test-results": true
   },
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/dist/**": true,
+    "**/test-results/**": true
+  },
+  "typescript.disableAutomaticTypeAcquisition": true,
+  "javascript.validate.enable": false,
+  "typescript.validate.enable": true,
+  "eslint.workingDirectories": [{ "mode": "auto" }],
   "tailwindCSS.experimental.classRegex": [["(?:cn|cva|cx)\\(([^)]*)\\)", "[\"'`]([^\"'`]*)[\"'`]"]],
   "errorLens.enabledDiagnosticLevels": ["error", "warning"],
   "dotenv.enableAutocloaking": true,
