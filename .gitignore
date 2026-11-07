@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+*.build.css
+
+# Test artefacts
+playwright-report/
+test-results/
+blob-report/
+.playwright/
+
+# Environment files: never commit real values
+.env
+.env.*
+!.env.example
+
+# Editor and OS noise
+.DS_Store
+Thumbs.db
+*.log
+
+# Tool caches
+.cache/
+coverage/

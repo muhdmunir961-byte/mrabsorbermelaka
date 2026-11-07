@@ -1,0 +1,15 @@
+{
+  "recommendations": [
+    "saoudrizwan.claude-dev",
+    "hai-browser.hai-browser",
+    "esbenp.prettier-vscode",
+    "dbaeumer.vscode-eslint",
+    "bradlc.vscode-tailwindcss",
+    "usernamehw.errorlens",
+    "eamodio.gitlens",
+    "christian-kohler.path-intellisense",
+    "mikestead.dotenv",
+    "ms-playwright.playwright"
+  ],
+  "unwantedRecommendations": []
+}
