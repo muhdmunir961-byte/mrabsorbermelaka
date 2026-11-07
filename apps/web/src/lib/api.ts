@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { StoredDocument } from '@mr/shared';
 
 const ErrorEnvelope = z.object({
   error: z.object({
@@ -66,4 +67,41 @@ export async function api<T>(
   }
 
   return schema.parse(payload);
+}
+
+/**
+ * Uploads a file as a raw body with its metadata in headers. The server checks
+ * the real bytes, so the browser's file.type is a convenience, not a promise.
+ */
+export async function apiUpload<T>(
+  path: string,
+  file: File,
+  kind: 'MC' | 'LEAVE_SUPPORT' | 'IDENTITY' | 'OTHER',
+  schema?: z.ZodType<T>,
+): Promise<T> {
+  const response = await fetch(`/api/v1${path}`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      'content-type': file.type,
+      'x-document-kind': kind,
+      'x-document-type': file.type,
+      'x-document-size': String(file.size),
+    },
+    body: file,
+  });
+
+  const payload: unknown = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    const parsed = ErrorEnvelope.safeParse(payload);
+    throw new ApiError(
+      parsed.success ? parsed.data.error.code : 'INTERNAL',
+      parsed.success ? parsed.data.error.message : 'Muat naik gagal',
+      response.status,
+      parsed.success ? (parsed.data.error.details ?? []) : [],
+    );
+  }
+
+  return (schema ?? (StoredDocument as unknown as z.ZodType<T>)).parse(payload);
 }

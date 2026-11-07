@@ -120,9 +120,23 @@ model Employee {
   notifications Notification[]
   announcements Announcement[]
   payrollLines  PayrollLine[]
+  faceEnrollment FaceEnrollment?
 
   @@index([branchId, status])
   @@index([role])
+}
+
+model FaceEnrollment {
+  id           String   @id @default(uuid()) @db.Uuid
+  employeeId   String   @unique @db.Uuid
+  /// AES-256-GCM ciphertext of the enrolled photo (data URL).
+  referenceEnc String
+  /// AES-256-GCM ciphertext of the 128-float descriptor as JSON.
+  descriptorEnc String
+  enrolledAt   DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime @updatedAt @db.Timestamptz(3)
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 }
 
 model Customer {

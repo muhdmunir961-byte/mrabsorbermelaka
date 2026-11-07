@@ -12,6 +12,7 @@ import { toErrorDetails } from './validate.js';
 import { analyticsRoutes } from './features/analytics/routes.js';
 import { authRoutes } from './features/auth/routes.js';
 import { documentRoutes } from './features/documents/routes.js';
+import { faceRoutes } from './features/face/routes.js';
 import { attendanceRoutes } from './features/attendance/routes.js';
 import { employeeRoutes } from './features/employees/routes.js';
 import { jobRoutes } from './features/jobs/routes.js';
@@ -105,6 +106,7 @@ export async function buildApp(): Promise<FastifyInstance> {
       await scope.register(payrollRoutes, { prefix: '/payroll' });
       await scope.register(analyticsRoutes, { prefix: '/analytics' });
       await scope.register(documentRoutes, { prefix: '/documents' });
+      await scope.register(faceRoutes, { prefix: '/face' });
     },
     { prefix: '/api/v1' },
   );

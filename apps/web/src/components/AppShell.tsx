@@ -51,6 +51,9 @@ export function AppShell() {
             <NavLink to="/clock" className={linkClass}>
               Daftar Masuk
             </NavLink>
+            <NavLink to="/mc" className={linkClass}>
+              Hantar MC
+            </NavLink>
             {canApprove ? (
               <NavLink to="/approvals" className={linkClass}>
                 Kelulusan

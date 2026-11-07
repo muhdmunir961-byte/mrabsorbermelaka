@@ -8,6 +8,7 @@ import { AnalyticsPage } from './pages/AnalyticsPage';
 import { EmployeeProfilePage } from './pages/EmployeeProfilePage';
 import { EmployeesPage } from './pages/EmployeesPage';
 import { LeavePage } from './pages/LeavePage';
+import { MedicalCertificatePage } from './pages/MedicalCertificatePage';
 import { LoginPage } from './pages/LoginPage';
 import { OperationsPage } from './pages/OperationsPage';
 import { PayrollPage } from './pages/PayrollPage';
@@ -57,6 +58,7 @@ export function App() {
         <Route path="/employees/:employeeId" element={<EmployeeProfilePage />} />
         <Route path="/home" element={<StaffHomePage />} />
         <Route path="/clock" element={<ClockInPage />} />
+        <Route path="/mc" element={<MedicalCertificatePage />} />
         <Route path="/leave" element={<LeavePage />} />
         <Route
           path="/approvals"

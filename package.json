@@ -41,6 +41,8 @@
   "allowScripts": {
     "@prisma/engines@7.10.1": true,
     "esbuild@0.28.2": true,
-    "prisma@7.10.1": true
+    "prisma@7.10.1": true,
+    "@tensorflow/tfjs-node@4.22.0": true,
+    "core-js@3.29.1": true
   }
 }

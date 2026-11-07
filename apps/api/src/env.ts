@@ -26,6 +26,10 @@ const EnvSchema = z.object({
   FIELD_INDEX_KEY: z.string().min(32, 'FIELD_INDEX_KEY must be at least 32 characters'),
   /** Root directory for uploaded documents. Created on first write. */
   UPLOAD_DIR: z.string().default('./var/uploads'),
+  /** Directory holding the face-api model files. Resolved from this file, not cwd. */
+  FACE_MODEL_DIR: z.string().default('model'),
+  /** Maximum Euclidean distance still treated as the same person. */
+  FACE_MATCH_THRESHOLD: z.coerce.number().min(0.3).max(0.8).default(0.45),
 });
 
 const parsed = EnvSchema.safeParse(process.env);
