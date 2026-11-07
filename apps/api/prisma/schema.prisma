@@ -1,0 +1,299 @@
+// Mr. Absorber Melaka - HR system data model.
+// Money is always an integer number of sen (1 RM = 100 sen), never a float.
+// Every timestamp is stored in UTC; date-only columns use @db.Date.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  STAFF
+  FOREMAN
+  ADMIN_HR
+  OWNER
+}
+
+enum EmploymentStatus {
+  ACTIVE
+  SUSPENDED
+  TERMINATED
+}
+
+enum BranchCode {
+  MELAKA_UTAMA
+  AYER_KEROH
+}
+
+enum AttendanceState {
+  PRESENT
+  LATE
+  ON_MC
+  ABSENT
+  LEAVE
+}
+
+enum ClockMethod {
+  FACE
+  PIN
+  MANUAL
+}
+
+enum JobStatus {
+  ASSIGNED
+  IN_PROGRESS
+  BLOCKED
+  COMPLETED
+  CANCELLED
+}
+
+enum LeaveType {
+  ANNUAL
+  EMERGENCY
+  UNPAID
+  MATERNITY
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum PayrollStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  PAID
+}
+
+model Branch {
+  id              String     @id @default(uuid()) @db.Uuid
+  code            BranchCode @unique
+  name            String
+  latitude        Decimal    @db.Decimal(9, 6)
+  longitude       Decimal    @db.Decimal(9, 6)
+  geofenceRadiusM Int
+  createdAt       DateTime   @default(now()) @db.Timestamptz(3)
+
+  employees     Employee[]
+  jobs          Job[]
+  announcements Announcement[]
+}
+
+model Employee {
+  id                    String           @id @default(uuid()) @db.Uuid
+  fullName              String
+  phone                 String           @unique
+  identityCardNumber    String           @unique
+  address               String
+  emergencyContactName  String
+  emergencyContactPhone String
+  maritalStatus         String
+  role                  Role
+  status                EmploymentStatus @default(ACTIVE)
+  joinedOn              DateTime         @db.Date
+  avatarUrl             String?
+  pinHash               String?
+  telegramUserId        String?          @unique
+  baseSalarySen         Int
+  hourlyRateSen         Int
+  leaveEntitlementDays  Int              @default(21)
+  branchId              String           @db.Uuid
+  createdAt             DateTime         @default(now()) @db.Timestamptz(3)
+  updatedAt             DateTime         @updatedAt @db.Timestamptz(3)
+
+  branch        Branch             @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  attendance    AttendanceRecord[]
+  jobsAssigned  Job[]              @relation("JobAssignee")
+  leaveRequests LeaveRequest[]
+  leaveBalances LeaveBalance[]
+  attachments   Attachment[]
+  notifications Notification[]
+  announcements Announcement[]
+  payrollLines  PayrollLine[]
+
+  @@index([branchId, status])
+  @@index([role])
+}
+
+model Customer {
+  id       String    @id @default(uuid()) @db.Uuid
+  name     String
+  phone    String?
+  vehicles Vehicle[]
+}
+
+model Vehicle {
+  id          String   @id @default(uuid()) @db.Uuid
+  plateNumber String   @unique
+  model       String
+  customerId  String   @db.Uuid
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  jobs     Job[]
+}
+
+model ServiceType {
+  id                   String @id @default(uuid()) @db.Uuid
+  name                 String @unique
+  defaultMinutes       Int
+  defaultCommissionSen Int
+
+  jobs Job[]
+}
+
+model Job {
+  id               String    @id @default(uuid()) @db.Uuid
+  branchId         String    @db.Uuid
+  vehicleId        String    @db.Uuid
+  serviceTypeId    String    @db.Uuid
+  assigneeId       String?   @db.Uuid
+  status           JobStatus @default(ASSIGNED)
+  progressPct      Int       @default(0)
+  commissionSen    Int
+  estimatedMinutes Int
+  startedAt        DateTime? @db.Timestamptz(3)
+  completedAt      DateTime? @db.Timestamptz(3)
+  createdAt        DateTime  @default(now()) @db.Timestamptz(3)
+
+  branch      Branch      @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  vehicle     Vehicle     @relation(fields: [vehicleId], references: [id], onDelete: Restrict)
+  serviceType ServiceType @relation(fields: [serviceTypeId], references: [id], onDelete: Restrict)
+  assignee    Employee?   @relation("JobAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+
+  @@index([branchId, status])
+  @@index([assigneeId, status])
+}
+
+model AttendanceRecord {
+  id                String          @id @default(uuid()) @db.Uuid
+  employeeId        String          @db.Uuid
+  workDate          DateTime        @db.Date
+  state             AttendanceState
+  method            ClockMethod
+  clockInAt         DateTime?       @db.Timestamptz(3)
+  clockOutAt        DateTime?       @db.Timestamptz(3)
+  geofenceDistanceM Int?
+  lateMinutes       Int             @default(0)
+  createdAt         DateTime        @default(now()) @db.Timestamptz(3)
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@unique([employeeId, workDate])
+  @@index([workDate, state])
+}
+
+model LeaveRequest {
+  id           String        @id @default(uuid()) @db.Uuid
+  employeeId   String        @db.Uuid
+  type         LeaveType
+  status       RequestStatus @default(PENDING)
+  startDate    DateTime      @db.Date
+  endDate      DateTime      @db.Date
+  days         Int
+  reason       String
+  clinicName   String?
+  documentId   String?       @db.Uuid
+  decidedById  String?       @db.Uuid
+  decidedAt    DateTime?     @db.Timestamptz(3)
+  decisionNote String?
+  createdAt    DateTime      @default(now()) @db.Timestamptz(3)
+
+  employee Employee    @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  document Attachment? @relation(fields: [documentId], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@index([employeeId, startDate])
+}
+
+model LeaveBalance {
+  id              String @id @default(uuid()) @db.Uuid
+  employeeId      String @db.Uuid
+  year            Int
+  entitlementDays Int
+  usedDays        Int    @default(0)
+  pendingDays     Int    @default(0)
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@unique([employeeId, year])
+}
+
+model Attachment {
+  id         String   @id @default(uuid()) @db.Uuid
+  employeeId String   @db.Uuid
+  kind       String
+  mimeType   String
+  sizeBytes  Int
+  storageKey String   @unique
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+
+  employee      Employee       @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  leaveRequests LeaveRequest[]
+}
+
+model PayrollRun {
+  id           String        @id @default(uuid()) @db.Uuid
+  periodYear   Int
+  periodMonth  Int
+  status       PayrollStatus @default(DRAFT)
+  approvedById String?       @db.Uuid
+  approvedAt   DateTime?     @db.Timestamptz(3)
+  createdAt    DateTime      @default(now()) @db.Timestamptz(3)
+
+  lines PayrollLine[]
+
+  @@unique([periodYear, periodMonth])
+}
+
+model PayrollLine {
+  id            String  @id @default(uuid()) @db.Uuid
+  runId         String  @db.Uuid
+  employeeId    String  @db.Uuid
+  baseSalarySen Int
+  overtimeHours Decimal @db.Decimal(4, 1)
+  commissionSen Int
+  deductionsSen Int
+  netPaySen     Int
+  anomaly       String?
+
+  run      PayrollRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  employee Employee   @relation(fields: [employeeId], references: [id], onDelete: Restrict)
+
+  @@unique([runId, employeeId])
+  @@index([employeeId])
+}
+
+model Announcement {
+  id          String   @id @default(uuid()) @db.Uuid
+  branchId    String?  @db.Uuid
+  authorId    String   @db.Uuid
+  title       String
+  body        String
+  publishedAt DateTime @default(now()) @db.Timestamptz(3)
+
+  branch Branch?  @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  author Employee @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([publishedAt])
+}
+
+model Notification {
+  id         String    @id @default(uuid()) @db.Uuid
+  employeeId String    @db.Uuid
+  kind       String
+  title      String
+  body       String
+  readAt     DateTime? @db.Timestamptz(3)
+  createdAt  DateTime  @default(now()) @db.Timestamptz(3)
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId, readAt])
+}

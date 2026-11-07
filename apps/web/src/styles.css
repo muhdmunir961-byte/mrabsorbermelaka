@@ -1,0 +1,61 @@
+@import 'tailwindcss';
+
+/*
+ * Design tokens. Values are measured from the reference export in
+ * references-mrabsorberhr, not invented: the accent is the red-600 that every
+ * primary action in that file uses.
+ */
+@theme {
+  --color-canvas: #f9fafb;
+  --color-surface: #ffffff;
+  --color-ink: #111827;
+  --color-ink-muted: #6b7280;
+  --color-border: #e5e7eb;
+  --color-border-strong: #6b7280;
+  --color-accent: #dc2626;
+  --color-accent-strong: #b91c1c;
+  --color-accent-ink: #ffffff;
+  --color-accent-soft: #fef2f2;
+  --color-success: #10a54a;
+  --color-warning: #b45309;
+  --color-warning-soft: #fffbeb;
+
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+
+  --radius-panel: 0.75rem;
+  --radius-control: 0.5rem;
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+
+  body {
+    margin: 0;
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Numbers in a column must line up. */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}

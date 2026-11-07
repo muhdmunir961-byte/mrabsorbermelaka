@@ -1,35 +1,46 @@
 {
-  "name": "workspace",
+  "name": "mrabsorber-hr",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
-  "description": "Project workspace. Tooling baseline only; no runtime framework chosen yet.",
+  "description": "Mr. Absorber Melaka - HR system. Web app, API, and shared domain contracts.",
   "engines": {
     "node": ">=20.12"
   },
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
   "scripts": {
+    "dev:api": "npm run dev --workspace @mr/api",
+    "dev:web": "npm run dev --workspace @mr/web",
+    "build": "npm run build --workspaces --if-present",
+    "db:generate": "npm run db:generate --workspace @mr/api",
+    "db:migrate": "npm run db:migrate --workspace @mr/api",
+    "db:seed": "npm run db:seed --workspace @mr/api",
+    "db:reset": "npm run db:reset --workspace @mr/api",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "typecheck": "tsc --noEmit",
-    "css:build": "tailwindcss -i ./src/styles.css -o ./src/styles.build.css --minify",
+    "typecheck": "npm run typecheck --workspaces --if-present && tsc --noEmit -p tsconfig.json",
     "test:e2e": "bash scripts/with-browser-libs.sh playwright test",
+    "test:unit": "npm run test --workspaces --if-present",
     "verify": "npm run format:check && npm run lint && npm run typecheck && npm run test:e2e"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.65.0",
-    "@tailwindcss/cli": "^4.3.5",
     "@types/node": "^26.6.6",
     "eslint": "^10.14.0",
     "eslint-config-prettier": "^10.1.8",
     "prettier": "^3.9.10",
-    "tailwindcss": "^4.3.5",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.72.1"
   },
-  "dependencies": {
-    "zod": "^4.6.7"
+  "allowScripts": {
+    "@prisma/engines@7.10.1": true,
+    "esbuild@0.28.2": true,
+    "prisma@7.10.1": true
   }
 }

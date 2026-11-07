@@ -30,6 +30,14 @@ exists and is a no-op everywhere else. Do not "fix" a missing-library error by
 editing `tsconfig` or skipping the gate; run the wrapper, or install the OS packages
 properly with root.
 
+The same image ships **no font files at all**, which makes Chromium lay out every
+text node at zero height: the page looks blank while the DOM is correct. Liberation
+fonts were extracted into `~/.local/share/fonts`. If text disappears again, check
+fonts before suspecting CSS.
+
+The suite drives the real stack: Playwright starts the API and the Vite dev server
+and needs PostgreSQL reachable through `DATABASE_URL` (see `apps/api/.env`).
+
 ## Writing tests
 
 - Test behaviour through the public surface, not internals. Assert on what a user or caller sees.

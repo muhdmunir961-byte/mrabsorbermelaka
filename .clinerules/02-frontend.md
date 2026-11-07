@@ -1,8 +1,7 @@
 # 02 — Frontend Engineering
 
-**Framework status: none chosen yet.** This repository is a tooling baseline. Do not scaffold a
-framework, router, or component kit until the project actually needs one, and when it does, confirm
-the choice before installing. The rules below apply to whatever is built.
+**Framework: React 19 + Vite 8 + Tailwind CSS v4**, in `apps/web`. TypeScript `strict`.
+Shared contracts live in `packages/shared` and are the only source of domain types.
 
 ## TypeScript
 

@@ -6,7 +6,7 @@ export default tseslint.config(
   {
     ignores: [
       'node_modules/**',
-      'dist/**',
+      '**/dist/**',
       '**/*.build.css',
       'playwright-report/**',
       'test-results/**',
@@ -25,6 +25,12 @@ export default tseslint.config(
     rules: {
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/consistent-type-imports': 'error',
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' },
+      ],
+      // TypeScript already resolves globals; no-undef only produces false positives here.
+      'no-undef': 'off',
       eqeqeq: ['error', 'always'],
       'no-console': ['warn', { allow: ['warn', 'error'] }],
     },

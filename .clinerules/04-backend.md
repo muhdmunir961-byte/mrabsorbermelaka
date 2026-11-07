@@ -1,7 +1,11 @@
 # 04 — Backend Engineering
 
-**No backend framework is installed.** This repository is a tooling baseline. When the project needs
-a server, choose the smallest thing that fits and confirm it before installing a framework.
+**Stack: Fastify 5 + Prisma 7 + PostgreSQL 16**, in `apps/api`. Layering is `routes → service →
+repository`; a route never touches Prisma.
+
+Prisma 7 specifics that bite if forgotten: the connection URL lives in `prisma.config.ts`, not in
+`schema.prisma`, and `PrismaClient` is constructed with the `PrismaPg` driver adapter. Money columns
+are integer **sen**, never floats.
 
 Reference baseline: [nodebestpractices](https://github.com/goldbergyoni/nodebestpractices),
 [OWASP CheatSheetSeries](https://github.com/OWASP/CheatSheetSeries),

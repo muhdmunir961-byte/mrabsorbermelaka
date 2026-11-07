@@ -1,17 +1,36 @@
 import { expect, test } from '@playwright/test';
 
-test('fixture page renders a single main heading', async ({ page }) => {
+const DEMO_PHONE = '+60123456789';
+
+test('a mechanic signs in with an OTP and sees their shift', async ({ page }) => {
   await page.goto('/');
 
-  await expect(page).toHaveTitle('Workspace fixture');
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Workspace fixture');
-  await expect(page.getByRole('link', { name: 'Source' })).toHaveAttribute(
-    'href',
-    'https://example.com',
-  );
+  await expect(page.getByRole('heading', { name: 'Selamat Kembali!' })).toBeVisible();
+
+  // The demo phone link fills the field, so the test never hard-codes the value twice.
+  await page.getByRole('button', { name: DEMO_PHONE }).click();
+  await page.getByRole('button', { name: 'Hantar OTP' }).click();
+
+  const notice = page.getByText('Mod pembangunan');
+  await expect(notice).toBeVisible();
+  const code = (await notice.textContent())?.match(/\d{6}/)?.[0];
+  expect(code, 'the development OTP should be shown in the notice').toBeTruthy();
+
+  await page.getByLabel('Kod OTP').fill(code ?? '');
+  await page.getByRole('button', { name: 'Masuk' }).click();
+
+  await expect(page.getByRole('heading', { name: 'Ahmad Firdaus bin Ramli' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Kehadiran hari ini' })).toBeVisible();
 });
 
-test('layout does not overflow the viewport', async ({ page }) => {
+test('an anonymous visitor is sent to the login screen', async ({ page }) => {
+  await page.goto('/operations');
+
+  await expect(page.getByRole('heading', { name: 'Selamat Kembali!' })).toBeVisible();
+  await expect(page.getByLabel('Nombor Telefon')).toBeVisible();
+});
+
+test('the login screen does not overflow a narrow viewport', async ({ page }) => {
   await page.goto('/');
 
   const overflows = await page.evaluate(

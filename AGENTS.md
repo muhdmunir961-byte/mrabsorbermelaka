@@ -5,8 +5,11 @@ Instructions for any coding agent working in this repository. The detailed rules
 
 ## What this repository is
 
-A development environment and tooling baseline. No runtime framework has been chosen yet, so do not
-scaffold one, and do not assume React, Next.js, or any backend framework is present.
+The **Mr. Absorber Melaka HR system**: a React + Vite web app (`apps/web`), a Fastify + Prisma API
+(`apps/api`), and shared Zod contracts (`packages/shared`). The reference design lives in
+`references-mrabsorberhr/`.
+
+Do not swap the stack, and do not add a second component kit or ORM.
 
 ## Read these first
 
