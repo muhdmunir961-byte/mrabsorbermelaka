@@ -20,6 +20,16 @@ did not observe.
 - **Types** — `tsc --noEmit` under `strict`. Weakening `tsconfig.json` is not a fix.
 - **Browser** — Playwright, Chromium plus a mobile profile, against the fixture server.
 
+### Environment note (lean container images)
+
+This image ships no GLib/NSS/X11 libraries, so Chromium cannot start unless extra
+shared objects are on the loader path. They were fetched **rootlessly** into
+`~/.local/sysroot` (no system packages, no `apt` as root). `npm run test:e2e` wraps
+Playwright in `scripts/with-browser-libs.sh`, which prepends that sysroot when it
+exists and is a no-op everywhere else. Do not "fix" a missing-library error by
+editing `tsconfig` or skipping the gate; run the wrapper, or install the OS packages
+properly with root.
+
 ## Writing tests
 
 - Test behaviour through the public surface, not internals. Assert on what a user or caller sees.

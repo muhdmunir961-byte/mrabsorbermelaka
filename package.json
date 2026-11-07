@@ -14,8 +14,8 @@
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc --noEmit",
     "css:build": "tailwindcss -i ./src/styles.css -o ./src/styles.build.css --minify",
-    "test:e2e": "playwright test",
-    "verify": "npm run format:check && npm run lint && npm run typecheck && npm run test:e2e -- --list"
+    "test:e2e": "bash scripts/with-browser-libs.sh playwright test",
+    "verify": "npm run format:check && npm run lint && npm run typecheck && npm run test:e2e"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
