@@ -41,6 +41,11 @@ FROM node:22-bookworm-slim AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
 
+# A container must listen on all interfaces or the port mapping cannot reach it;
+# the application default (127.0.0.1) is right for a laptop and wrong for a pod.
+ENV API_HOST=0.0.0.0
+ENV API_PORT=4000
+
 # Chromium is a hard runtime dependency of the face matcher, not an optional
 # extra: without these libraries /face/* fails while everything else works.
 RUN apt-get update \
@@ -72,7 +77,8 @@ USER node
 WORKDIR /app/apps/api
 EXPOSE 4000
 
-# Readiness, not liveness: this endpoint checks the database.
+# Readiness, not liveness: this endpoint checks the database. The probe is Node
+# because the image has no curl or wget for Coolify's default health check to use.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
   CMD node -e "fetch('http://127.0.0.1:4000/health/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
