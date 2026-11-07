@@ -1,0 +1,3 @@
+# Design reference exports are large binaries and are not needed to build or run
+# the app. Only the PDFs are ignored; the folder itself stays tracked.
+*.pdf
