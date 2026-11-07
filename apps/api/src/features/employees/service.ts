@@ -1,7 +1,13 @@
-import type { EmployeeDirectoryQuery, EmployeeProfile, EmployeeSummary, Page } from '@mr/shared';
+import type {
+  EmployeeDirectoryQuery,
+  EmployeeProfileView,
+  EmployeeSummary,
+  EmploymentStatusInput,
+  Page,
+} from '@mr/shared';
 import type { SessionUser } from '../../auth/session.js';
 import { decryptField } from '../../crypto/field.js';
-import { forbidden, notFound } from '../../errors.js';
+import { conflict, forbidden, notFound } from '../../errors.js';
 import { employeeRepository as repo } from './repository.js';
 
 export async function listDirectory(query: EmployeeDirectoryQuery): Promise<Page<EmployeeSummary>> {
@@ -24,7 +30,7 @@ export async function listDirectory(query: EmployeeDirectoryQuery): Promise<Page
 export async function getProfile(
   user: SessionUser,
   employeeId: string,
-): Promise<EmployeeProfile & { leaveRemainingDays: number }> {
+): Promise<EmployeeProfileView> {
   const isSelf = user.employeeId === employeeId;
   const canSeeOthers = user.role === 'ADMIN_HR' || user.role === 'OWNER';
   if (!isSelf && !canSeeOthers) {
@@ -34,7 +40,27 @@ export async function getProfile(
   const employee = await repo.findProfile(employeeId);
   if (!employee) throw notFound('That employee does not exist');
 
-  const balance = await repo.findLeaveBalance(employeeId, new Date().getFullYear());
+  const now = new Date();
+  const year = now.getFullYear();
+
+  const [
+    balance,
+    attendanceRatePct,
+    jobsCompleted,
+    mcDaysThisYear,
+    commissionThisMonthSen,
+    documents,
+    recentLeave,
+  ] = await Promise.all([
+    repo.findLeaveBalance(employeeId, year),
+    repo.attendanceRate(employeeId),
+    repo.jobsCompleted(employeeId),
+    repo.mcDays(year, employeeId),
+    repo.commissionInMonth(employeeId, year, now.getMonth() + 1),
+    repo.documents(employeeId),
+    repo.recentLeave(employeeId),
+  ]);
+
   const leaveRemainingDays = balance
     ? balance.entitlementDays - balance.usedDays - balance.pendingDays
     : employee.leaveEntitlementDays;
@@ -59,5 +85,48 @@ export async function getProfile(
     joinedOn: employee.joinedOn.toISOString().slice(0, 10),
     employmentStatus: employee.status,
     leaveRemainingDays,
+    stats: { attendanceRatePct, jobsCompleted, mcDaysThisYear, commissionThisMonthSen },
+    documents: documents.map((doc) => ({
+      id: doc.id,
+      kind: doc.kind,
+      mimeType: doc.mimeType,
+      sizeBytes: doc.sizeBytes,
+      createdAt: doc.createdAt.toISOString(),
+    })),
+    recentLeave: recentLeave.map((row) => ({
+      id: row.id,
+      type: row.type,
+      status: row.status,
+      startDate: row.startDate.toISOString().slice(0, 10),
+      endDate: row.endDate.toISOString().slice(0, 10),
+      days: row.days,
+    })),
   };
+}
+
+export async function changeEmploymentStatus(
+  approver: SessionUser,
+  employeeId: string,
+  input: EmploymentStatusInput,
+): Promise<{ id: string; status: string }> {
+  if (input.status === 'ACTIVE') {
+    throw conflict('Reactivating an employee is not supported by this endpoint');
+  }
+
+  const current = await repo.findStatus(employeeId);
+  if (!current) throw notFound('That employee does not exist');
+
+  if (current.status !== 'ACTIVE') {
+    throw conflict(`That employee is already ${current.status.toLowerCase()}`);
+  }
+
+  // Nobody should be able to lock themselves out of administration.
+  if (employeeId === approver.employeeId) {
+    throw forbidden('You cannot change your own employment status');
+  }
+
+  const changed = await repo.changeStatus(employeeId, 'ACTIVE', input.status);
+  if (!changed) throw conflict('That employee changed status a moment ago; reload and retry');
+
+  return { id: employeeId, status: input.status };
 }

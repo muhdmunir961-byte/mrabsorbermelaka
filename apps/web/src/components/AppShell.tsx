@@ -48,6 +48,11 @@ export function AppShell() {
                 Payroll
               </NavLink>
             ) : null}
+            {canApprove ? (
+              <NavLink to="/employees" className={linkClass}>
+                Pekerja
+              </NavLink>
+            ) : null}
             {canSeeOperations ? (
               <NavLink to="/operations" className={linkClass}>
                 Operasi Cawangan

@@ -2,6 +2,8 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { AppShell } from './components/AppShell';
 import { useSession } from './lib/session';
 import { ApprovalsPage } from './pages/ApprovalsPage';
+import { EmployeeProfilePage } from './pages/EmployeeProfilePage';
+import { EmployeesPage } from './pages/EmployeesPage';
 import { LeavePage } from './pages/LeavePage';
 import { LoginPage } from './pages/LoginPage';
 import { OperationsPage } from './pages/OperationsPage';
@@ -37,6 +39,11 @@ export function App() {
     <Routes>
       <Route path="/login" element={<Navigate to="/home" replace />} />
       <Route element={<AppShell />}>
+        <Route
+          path="/employees"
+          element={canApprove ? <EmployeesPage /> : <Navigate to="/home" replace />}
+        />
+        <Route path="/employees/:employeeId" element={<EmployeeProfilePage />} />
         <Route path="/home" element={<StaffHomePage />} />
         <Route path="/leave" element={<LeavePage />} />
         <Route
