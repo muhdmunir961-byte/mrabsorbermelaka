@@ -11,6 +11,7 @@ import { AppError } from './errors.js';
 import { toErrorDetails } from './validate.js';
 import { analyticsRoutes } from './features/analytics/routes.js';
 import { authRoutes } from './features/auth/routes.js';
+import { documentRoutes } from './features/documents/routes.js';
 import { attendanceRoutes } from './features/attendance/routes.js';
 import { employeeRoutes } from './features/employees/routes.js';
 import { jobRoutes } from './features/jobs/routes.js';
@@ -42,6 +43,16 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(cors, { origin: allowedOrigins, credentials: true });
   await app.register(cookie, { secret: env.SESSION_SECRET });
   await app.register(rateLimit, { max: 120, timeWindow: '1 minute' });
+
+  // Documents arrive as a raw buffer, so only this route needs a larger limit and
+  // a buffer parser. Everything else stays JSON at 256 KB.
+  app.addContentTypeParser(
+    ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'],
+    { parseAs: 'buffer', bodyLimit: 6 * 1024 * 1024 },
+    (_request, body, done) => {
+      done(null, body);
+    },
+  );
 
   app.get('/health', () => ({
     status: 'ok',
@@ -93,6 +104,7 @@ export async function buildApp(): Promise<FastifyInstance> {
       await scope.register(leaveRoutes, { prefix: '/leave' });
       await scope.register(payrollRoutes, { prefix: '/payroll' });
       await scope.register(analyticsRoutes, { prefix: '/analytics' });
+      await scope.register(documentRoutes, { prefix: '/documents' });
     },
     { prefix: '/api/v1' },
   );

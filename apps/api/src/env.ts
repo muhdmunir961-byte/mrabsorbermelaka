@@ -24,6 +24,8 @@ const EnvSchema = z.object({
     }),
   /** Separate key for the deterministic blind index used by equality lookups. */
   FIELD_INDEX_KEY: z.string().min(32, 'FIELD_INDEX_KEY must be at least 32 characters'),
+  /** Root directory for uploaded documents. Created on first write. */
+  UPLOAD_DIR: z.string().default('./var/uploads'),
 });
 
 const parsed = EnvSchema.safeParse(process.env);

@@ -1,6 +1,7 @@
 export * from './api.js';
 export * from './analytics.js';
 export * from './attendance.js';
+export * from './document.js';
 export * from './employee.js';
 export * from './enums.js';
 export * from './job.js';
