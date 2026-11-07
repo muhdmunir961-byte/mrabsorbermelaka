@@ -1,4 +1,5 @@
 export * from './api.js';
+export * from './analytics.js';
 export * from './attendance.js';
 export * from './employee.js';
 export * from './enums.js';

@@ -35,6 +35,16 @@ export function AppShell() {
             <NavLink to="/home" className={linkClass}>
               Utama
             </NavLink>
+            {canApprove ? (
+              <NavLink to="/dashboard" className={linkClass}>
+                Dashboard
+              </NavLink>
+            ) : null}
+            {canApprove ? (
+              <NavLink to="/analytics" className={linkClass}>
+                Analytics
+              </NavLink>
+            ) : null}
             <NavLink to="/leave" className={linkClass}>
               Cuti
             </NavLink>
