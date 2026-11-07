@@ -31,6 +31,8 @@ const EnvSchema = z.object({
   UPLOAD_DIR: z.string().default('./var/uploads'),
   /** Directory holding the face-api model files. Resolved from this file, not cwd. */
   FACE_MODEL_DIR: z.string().default('model'),
+  /** Absolute path to a system Chromium. Empty means use the bundled browser. */
+  PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH: z.string().optional(),
   /** Maximum Euclidean distance still treated as the same person. */
   FACE_MATCH_THRESHOLD: z.coerce.number().min(0.3).max(0.8).default(0.45),
   /**

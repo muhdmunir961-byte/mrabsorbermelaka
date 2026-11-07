@@ -100,7 +100,13 @@ window.ready = true;
     throw new Error('Could not bind the face matcher server');
   }
 
-  const browser = await chromium.launch({ args: ['--disable-dev-shm-usage', '--no-sandbox'] });
+  const browser = await chromium.launch({
+    // A container ships Chromium from apt, so the bundled download is skipped.
+    ...(env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
+      ? { executablePath: env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH }
+      : {}),
+    args: ['--disable-dev-shm-usage', '--no-sandbox'],
+  });
   const page = await browser.newPage();
   await page.goto(`http://127.0.0.1:${address.port}/`);
   await page.waitForFunction(

@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "serve": "tsx src/server.ts",
-    "start": "node --experimental-strip-types src/server.ts",
+    "start": "node dist/server.js",
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
     "test": "node --import tsx --test \"src/**/*.test.ts\"",
@@ -24,6 +24,7 @@
     "@fastify/rate-limit": "^11.2.2",
     "@mr/shared": "*",
     "@napi-rs/canvas": "^1.1.0",
+    "@playwright/test": "^1.65.0",
     "@prisma/adapter-pg": "7.10.1",
     "@prisma/client": "7.10.1",
     "@tensorflow/tfjs": "^4.22.0",
