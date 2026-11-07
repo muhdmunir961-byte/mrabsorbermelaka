@@ -20,6 +20,9 @@ RUN npm run build --workspace @mr/shared \
  && npx prisma generate --schema apps/api/prisma/schema.prisma \
  && npm run build --workspace @mr/api
 
+# `prisma` stays a runtime dependency on purpose: the pre-deploy step runs
+# `prisma migrate deploy` inside this image, after dev dependencies are pruned.
+
 # Drop dev dependencies and start from a clean production tree.
 RUN npm prune --omit=dev
 
@@ -54,6 +57,9 @@ COPY --from=build /app/apps/api/prisma apps/api/prisma
 
 # Uploads are a volume; the image must not assume they are writable state.
 ENV UPLOAD_DIR=/data/uploads
+# Prisma needs the schema path when its config file is not the working directory.
+ENV PRISMA_SCHEMA_PATH=/app/apps/api/prisma/schema.prisma
+
 RUN mkdir -p /data/uploads && chown -R node:node /data
 
 USER node
