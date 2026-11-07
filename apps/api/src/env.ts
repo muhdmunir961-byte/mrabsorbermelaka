@@ -63,8 +63,22 @@ if (parsed.data.NODE_ENV === 'production') {
       'OTP_EXPOSE_DEV_CODE must be false in production: it returns the login code in the response.',
     );
   }
-  if (parsed.data.SESSION_SECRET.includes('dev-only')) {
+  if (parsed.data.NODE_ENV === 'production' && parsed.data.SESSION_SECRET.includes('dev-only')) {
     throw new Error('SESSION_SECRET still holds the development placeholder.');
+  }
+  // A split deployment puts the web app on another origin, so the session cookie
+  // becomes cross-site. Browsers refuse SameSite=None without Secure, and Secure
+  // requires https, which is why this is a startup check rather than a comment.
+  for (const origin of parsed.data.CORS_ORIGIN.split(',')) {
+    const trimmed = origin.trim();
+    if (
+      trimmed !== '' &&
+      !trimmed.startsWith('https://') &&
+      !trimmed.startsWith('http://localhost') &&
+      !trimmed.startsWith('http://127.0.0.1')
+    ) {
+      throw new Error(`CORS_ORIGIN must use https (got ${trimmed}).`);
+    }
   }
 }
 

@@ -66,7 +66,10 @@ export function decodeSession(token: string | undefined): SessionUser | null {
 
 export const sessionCookieOptions = {
   httpOnly: true,
-  sameSite: 'lax' as const,
+  // In production the web app may live on a different origin than the API, and a
+  // cross-site cookie must be SameSite=None *and* Secure. When both are served
+  // from one origin this stays 'lax', which is stricter.
+  sameSite: env.NODE_ENV === 'production' ? ('none' as const) : ('lax' as const),
   secure: env.NODE_ENV === 'production',
   path: '/',
   maxAge: MAX_AGE_SECONDS,

@@ -7,6 +7,7 @@ import { DashboardPage } from './pages/DashboardPage';
 import { AnalyticsPage } from './pages/AnalyticsPage';
 import { EmployeeProfilePage } from './pages/EmployeeProfilePage';
 import { EmployeesPage } from './pages/EmployeesPage';
+import { FaceSetupPage } from './pages/FaceSetupPage';
 import { LeavePage } from './pages/LeavePage';
 import { MedicalCertificatePage } from './pages/MedicalCertificatePage';
 import { LoginPage } from './pages/LoginPage';
@@ -59,6 +60,7 @@ export function App() {
         <Route path="/home" element={<StaffHomePage />} />
         <Route path="/clock" element={<ClockInPage />} />
         <Route path="/mc" element={<MedicalCertificatePage />} />
+        <Route path="/face" element={<FaceSetupPage />} />
         <Route path="/leave" element={<LeavePage />} />
         <Route
           path="/approvals"

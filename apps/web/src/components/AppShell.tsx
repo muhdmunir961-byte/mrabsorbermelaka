@@ -54,6 +54,9 @@ export function AppShell() {
             <NavLink to="/mc" className={linkClass}>
               Hantar MC
             </NavLink>
+            <NavLink to="/face" className={linkClass}>
+              Wajah
+            </NavLink>
             {canApprove ? (
               <NavLink to="/approvals" className={linkClass}>
                 Kelulusan

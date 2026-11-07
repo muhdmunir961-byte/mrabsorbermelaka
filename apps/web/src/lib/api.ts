@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { StoredDocument } from '@mr/shared';
+import { apiUrl } from './config';
 
 const ErrorEnvelope = z.object({
   error: z.object({
@@ -38,7 +39,7 @@ export async function api<T>(
   schema: z.ZodType<T>,
   init: RequestInit = {},
 ): Promise<T> {
-  const response = await fetch(`/api/v1${path}`, {
+  const response = await fetch(apiUrl(path), {
     credentials: 'include',
     ...init,
     headers: {
@@ -79,7 +80,7 @@ export async function apiUpload<T>(
   kind: 'MC' | 'LEAVE_SUPPORT' | 'IDENTITY' | 'OTHER',
   schema?: z.ZodType<T>,
 ): Promise<T> {
-  const response = await fetch(`/api/v1${path}`, {
+  const response = await fetch(apiUrl(path), {
     method: 'POST',
     credentials: 'include',
     headers: {

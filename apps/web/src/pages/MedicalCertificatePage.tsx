@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { z } from 'zod';
 import { ALLOWED_MIME_TYPES, MAX_UPLOAD_BYTES, StoredDocument } from '@mr/shared';
 import { ApiError, api, apiUpload } from '../lib/api';
+import { apiUrl } from '../lib/config';
 
 const MyDocuments = z.array(StoredDocument);
 
@@ -259,7 +260,7 @@ export function MedicalCertificatePage() {
                   </span>
                 </span>
                 <a
-                  href={`/api/v1/documents/${doc.id}`}
+                  href={apiUrl(`/documents/${doc.id}`)}
                   className="text-sm font-medium underline"
                   download
                 >
