@@ -48,6 +48,9 @@ export function AppShell() {
             <NavLink to="/leave" className={linkClass}>
               Cuti
             </NavLink>
+            <NavLink to="/clock" className={linkClass}>
+              Daftar Masuk
+            </NavLink>
             {canApprove ? (
               <NavLink to="/approvals" className={linkClass}>
                 Kelulusan

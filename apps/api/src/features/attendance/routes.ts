@@ -7,7 +7,7 @@ import type { FastifyPluginAsync } from 'fastify';
 import { ClockInInput } from '@mr/shared';
 import { currentUser } from '../../auth/guard.js';
 import { parseInput } from '../../validate.js';
-import { clockIn, clockOut, myRecordToday, todaySummary } from './service.js';
+import { clockIn, clockOut, myClockContext, myRecordToday, todaySummary } from './service.js';
 
 export const attendanceRoutes: FastifyPluginAsync = async (app) => {
   app.post('/clock-in', async (request, reply) => {
@@ -31,5 +31,10 @@ export const attendanceRoutes: FastifyPluginAsync = async (app) => {
   app.get('/me', async (request) => {
     const user = currentUser(request);
     return myRecordToday(user);
+  });
+
+  app.get('/context', async (request) => {
+    const user = currentUser(request);
+    return myClockContext(user);
   });
 };

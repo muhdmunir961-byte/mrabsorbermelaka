@@ -118,5 +118,21 @@ export async function myRecordToday(user: SessionUser, now = new Date()) {
     clockInAt: record.clockInAt ? record.clockInAt.toISOString() : null,
     clockOutAt: record.clockOutAt ? record.clockOutAt.toISOString() : null,
     lateMinutes: record.lateMinutes,
+    geofenceDistanceM: record.geofenceDistanceM,
+  };
+}
+
+/**
+ * What the clock-in screen needs before the employee acts: which branch they
+ * belong to and how far the geofence reaches. No coordinates are exposed.
+ */
+export async function myClockContext(user: SessionUser) {
+  const employee = await repo.findEmployee(user.employeeId);
+  if (!employee) throw notFound('Your employee record could not be found');
+  return {
+    branchName: employee.branchName,
+    branchCode: employee.branchCode,
+    geofenceRadiusM: employee.geofenceRadiusM,
+    shiftStartLabel: '09:00',
   };
 }

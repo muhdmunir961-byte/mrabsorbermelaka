@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { AppShell } from './components/AppShell';
 import { useSession } from './lib/session';
 import { ApprovalsPage } from './pages/ApprovalsPage';
+import { ClockInPage } from './pages/ClockInPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { AnalyticsPage } from './pages/AnalyticsPage';
 import { EmployeeProfilePage } from './pages/EmployeeProfilePage';
@@ -55,6 +56,7 @@ export function App() {
         />
         <Route path="/employees/:employeeId" element={<EmployeeProfilePage />} />
         <Route path="/home" element={<StaffHomePage />} />
+        <Route path="/clock" element={<ClockInPage />} />
         <Route path="/leave" element={<LeavePage />} />
         <Route
           path="/approvals"
