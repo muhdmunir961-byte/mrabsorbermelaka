@@ -15,6 +15,7 @@ export function AppShell() {
 
   const canSeeOperations =
     user.role === 'FOREMAN' || user.role === 'ADMIN_HR' || user.role === 'OWNER';
+  const canApprove = user.role === 'ADMIN_HR' || user.role === 'OWNER';
 
   const linkClass = ({ isActive }: { isActive: boolean }) =>
     [
@@ -34,6 +35,14 @@ export function AppShell() {
             <NavLink to="/home" className={linkClass}>
               Utama
             </NavLink>
+            <NavLink to="/leave" className={linkClass}>
+              Cuti
+            </NavLink>
+            {canApprove ? (
+              <NavLink to="/approvals" className={linkClass}>
+                Kelulusan
+              </NavLink>
+            ) : null}
             {canSeeOperations ? (
               <NavLink to="/operations" className={linkClass}>
                 Operasi Cawangan

@@ -1,6 +1,8 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { AppShell } from './components/AppShell';
 import { useSession } from './lib/session';
+import { ApprovalsPage } from './pages/ApprovalsPage';
+import { LeavePage } from './pages/LeavePage';
 import { LoginPage } from './pages/LoginPage';
 import { OperationsPage } from './pages/OperationsPage';
 import { StaffHomePage } from './pages/StaffHomePage';
@@ -28,12 +30,18 @@ export function App() {
   }
 
   const isOperations = user.role === 'FOREMAN' || user.role === 'ADMIN_HR' || user.role === 'OWNER';
+  const canApprove = user.role === 'ADMIN_HR' || user.role === 'OWNER';
 
   return (
     <Routes>
       <Route path="/login" element={<Navigate to="/home" replace />} />
       <Route element={<AppShell />}>
         <Route path="/home" element={<StaffHomePage />} />
+        <Route path="/leave" element={<LeavePage />} />
+        <Route
+          path="/approvals"
+          element={canApprove ? <ApprovalsPage /> : <Navigate to="/home" replace />}
+        />
         <Route
           path="/operations"
           element={isOperations ? <OperationsPage /> : <Navigate to="/home" replace />}

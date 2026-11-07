@@ -11,8 +11,9 @@ import { AppError } from './errors.js';
 import { toErrorDetails } from './validate.js';
 import { authRoutes } from './features/auth/routes.js';
 import { attendanceRoutes } from './features/attendance/routes.js';
-import { jobRoutes } from './features/jobs/routes.js';
 import { employeeRoutes } from './features/employees/routes.js';
+import { jobRoutes } from './features/jobs/routes.js';
+import { leaveRoutes } from './features/leave/routes.js';
 
 function errorBody(
   code: ApiErrorBody['error']['code'],
@@ -44,16 +45,6 @@ export async function buildApp(): Promise<FastifyInstance> {
     status: 'ok',
     uptimeSeconds: Math.round(process.uptime()),
   }));
-
-  await app.register(
-    async (scope) => {
-      await scope.register(authRoutes, { prefix: '/auth' });
-      await scope.register(attendanceRoutes, { prefix: '/attendance' });
-      await scope.register(jobRoutes, { prefix: '/jobs' });
-      await scope.register(employeeRoutes, { prefix: '/employees' });
-    },
-    { prefix: '/api/v1' },
-  );
 
   app.setNotFoundHandler((request, reply) =>
     reply.code(404).send(errorBody('NOT_FOUND', 'No such endpoint', String(request.id))),
@@ -88,6 +79,19 @@ export async function buildApp(): Promise<FastifyInstance> {
       .code(500)
       .send(errorBody('INTERNAL', 'Something went wrong on our side.', correlationId));
   });
+
+  // Registered after the handlers above so every route inherits them. Registering
+  // routes first left Fastify's default serializer in place for scoped errors.
+  await app.register(
+    async (scope) => {
+      await scope.register(authRoutes, { prefix: '/auth' });
+      await scope.register(attendanceRoutes, { prefix: '/attendance' });
+      await scope.register(jobRoutes, { prefix: '/jobs' });
+      await scope.register(employeeRoutes, { prefix: '/employees' });
+      await scope.register(leaveRoutes, { prefix: '/leave' });
+    },
+    { prefix: '/api/v1' },
+  );
 
   return app;
 }

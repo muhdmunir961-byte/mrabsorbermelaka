@@ -52,6 +52,7 @@ enum JobStatus {
 
 enum LeaveType {
   ANNUAL
+  MEDICAL
   EMERGENCY
   UNPAID
   MATERNITY

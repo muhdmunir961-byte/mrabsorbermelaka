@@ -1,5 +1,15 @@
 import { z } from 'zod';
-import { LeaveType, RequestStatus } from './enums.js';
+import { LeaveType, RequestStatus, Role } from './enums.js';
+
+const MS_PER_DAY = 86_400_000;
+
+/** Inclusive day count between two ISO dates (YYYY-MM-DD). Shared by API and web. */
+export function countLeaveDays(startDate: string, endDate: string): number {
+  const start = Date.parse(`${startDate}T00:00:00.000Z`);
+  const end = Date.parse(`${endDate}T00:00:00.000Z`);
+  if (Number.isNaN(start) || Number.isNaN(end) || end < start) return 0;
+  return Math.floor((end - start) / MS_PER_DAY) + 1;
+}
 
 export const LeaveBalance = z.object({
   year: z.int().min(2000).max(2100),
@@ -74,6 +84,28 @@ export const ApprovalInput = z
   })
   .strict();
 export type ApprovalInput = z.infer<typeof ApprovalInput>;
+
+/** Who else is already away over the requested dates. Advisory, never blocking. */
+export const LeaveConflict = z.object({
+  overlappingEmployeeNames: z.array(z.string()),
+  message: z.string(),
+});
+export type LeaveConflict = z.infer<typeof LeaveConflict>;
+
+export const LeaveSubmission = z.object({
+  request: LeaveRequest,
+  conflict: LeaveConflict.nullable(),
+});
+export type LeaveSubmission = z.infer<typeof LeaveSubmission>;
+
+/** A request as an approver sees it: the request plus who submitted it. */
+export const LeaveQueueItem = LeaveRequest.extend({
+  employeeName: z.string(),
+  employeeRole: Role,
+  clinicName: z.string().nullable(),
+  documentId: z.uuid().nullable(),
+});
+export type LeaveQueueItem = z.infer<typeof LeaveQueueItem>;
 
 export const BatchApprovalInput = z
   .object({

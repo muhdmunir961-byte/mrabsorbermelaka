@@ -16,8 +16,17 @@ export default defineConfig({
     screenshot: 'only-on-failure',
   },
   projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
-    { name: 'mobile', use: { ...devices['Pixel 7'] } },
+    { name: 'setup', testMatch: /auth\.setup\.ts$/ },
+    {
+      name: 'chromium',
+      dependencies: ['setup'],
+      use: { ...devices['Desktop Chrome'], storageState: 'tests/.auth/staff.json' },
+    },
+    {
+      name: 'mobile',
+      dependencies: ['setup'],
+      use: { ...devices['Pixel 7'], storageState: 'tests/.auth/staff.json' },
+    },
   ],
   webServer: [
     {

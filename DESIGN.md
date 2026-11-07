@@ -89,9 +89,9 @@ Notes taken from the measurement, not from taste:
 
 - Breakpoints: 640 / 768 / 1024 / 1280. Max content width 1152px.
 - Login is two columns from 1024px up (brand panel + form), one column below.
-- Page order, and the only three screens that exist: **Login → Home (staff) → Operations
-  (foreman, admin, owner)**. Anything else is not built yet, and the navigation says so by not
-  listing it.
+- Page order, and the only five screens that exist: **Login → Home (staff) → Cuti (staff) →
+  Kelulusan (admin, owner) → Operations (foreman, admin, owner)**. Anything else is not built yet,
+  and the navigation says so by not listing it.
 
 ## 7. Components
 

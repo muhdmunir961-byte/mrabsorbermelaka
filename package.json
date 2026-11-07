@@ -26,7 +26,7 @@
     "typecheck": "npm run typecheck --workspaces --if-present && tsc --noEmit -p tsconfig.json",
     "test:e2e": "bash scripts/with-browser-libs.sh playwright test",
     "test:unit": "npm run test --workspaces --if-present",
-    "verify": "npm run format:check && npm run lint && npm run typecheck && npm run test:e2e"
+    "verify": "npm run format:check && npm run lint && npm run typecheck && npm run test:unit && npm run test:e2e"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

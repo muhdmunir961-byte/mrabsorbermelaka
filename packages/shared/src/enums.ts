@@ -31,7 +31,7 @@ export const JOB_STATUS = ['ASSIGNED', 'IN_PROGRESS', 'BLOCKED', 'COMPLETED', 'C
 export const JobStatus = z.enum(JOB_STATUS);
 export type JobStatus = z.infer<typeof JobStatus>;
 
-export const LEAVE_TYPES = ['ANNUAL', 'EMERGENCY', 'UNPAID', 'MATERNITY'] as const;
+export const LEAVE_TYPES = ['ANNUAL', 'MEDICAL', 'EMERGENCY', 'UNPAID', 'MATERNITY'] as const;
 export const LeaveType = z.enum(LEAVE_TYPES);
 export type LeaveType = z.infer<typeof LeaveType>;
 

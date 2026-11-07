@@ -56,5 +56,13 @@ export default tseslint.config(
       },
     },
   },
+  {
+    // node:test registers a case by returning a promise the runner tracks itself,
+    // so not awaiting `it()` is correct rather than a floating promise.
+    files: ['**/*.test.ts', '**/*.spec.ts'],
+    rules: {
+      '@typescript-eslint/no-floating-promises': 'off',
+    },
+  },
   prettier,
 );

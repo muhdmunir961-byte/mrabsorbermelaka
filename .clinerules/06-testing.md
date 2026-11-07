@@ -8,9 +8,20 @@ did not observe.
 | Format | `npm run format:check` | pass |
 | Lint | `npm run lint` | zero errors |
 | Types | `npm run typecheck` | zero errors |
+| Unit | `npm run test:unit` | pass |
 | Browser | `npm run test:e2e` | pass |
 
-`npm run verify` runs all four. Use it.
+`npm run verify` runs all five. Use it.
+
+## Browser tests sign in once
+
+The OTP endpoint is rate limited to 5 requests per 5 minutes per IP — a control we keep rather than
+weaken for tests. So `tests/e2e/auth.setup.ts` authenticates **once per run** and saves the session
+to `tests/.auth/staff.json` (git-ignored). Tests that must start signed out override it with
+`test.use({ storageState: { cookies: [], origins: [] } })`.
+
+Do not add a UI sign-in to every test; it will trip the rate limit and fail in ways that look like
+application bugs.
 
 ## What each gate covers
 
