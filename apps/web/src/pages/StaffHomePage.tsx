@@ -48,6 +48,7 @@ export function StaffHomePage() {
   const [pin, setPin] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   const [tick, setTick] = useState(0);
 
   const load = useCallback(async () => {
@@ -61,6 +62,7 @@ export function StaffHomePage() {
     setCommissionSen(pay.commissionSen);
     setBoard(jobs);
     setSummary(today);
+    setLoaded(true);
   }, []);
 
   useEffect(() => {
@@ -215,10 +217,10 @@ export function StaffHomePage() {
             Kehadiran cawangan
           </h2>
           <p className="tabular mt-2 text-2xl font-bold">
-            {summary ? `${summary.present} / ${summary.headcount}` : '—'}
+            {!loaded ? '…' : summary ? `${summary.present} / ${summary.headcount}` : '—'}
             <span className="ml-2 text-sm font-medium text-ink-muted">hadir</span>
           </p>
-          {summary ? (
+          {loaded && summary ? (
             <p className="mt-1 text-xs text-ink-muted">
               {summary.late} lewat · {summary.onMc} MC · {summary.absent} tidak hadir
             </p>
@@ -230,7 +232,11 @@ export function StaffHomePage() {
         <h2 id="tasks-heading" className="text-lg font-bold">
           Tugasan saya{mine.length ? ` (${mine.length})` : ''}
         </h2>
-        {mine.length === 0 ? (
+        {!loaded ? (
+          <p className="mt-2 rounded-panel border border-border bg-surface p-4 text-sm text-ink-muted">
+            Memuatkan tugasan…
+          </p>
+        ) : mine.length === 0 ? (
           <p className="mt-2 rounded-panel border border-border bg-surface p-4 text-sm text-ink-muted">
             Tiada tugasan aktif untuk anda sekarang.
           </p>
