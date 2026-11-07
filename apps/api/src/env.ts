@@ -4,7 +4,10 @@ import { config as loadEnv } from 'dotenv';
 import { z } from 'zod';
 
 const here = dirname(fileURLToPath(import.meta.url));
-loadEnv({ path: resolve(here, '../.env'), quiet: true });
+// An explicit path wins, so a test can point at an empty env and prove that
+// defaults do not silently enable development behaviour.
+const envPath = process.env.DOTENV_CONFIG_PATH ?? resolve(here, '../.env');
+loadEnv({ path: envPath, quiet: true });
 
 const EnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
@@ -30,6 +33,15 @@ const EnvSchema = z.object({
   FACE_MODEL_DIR: z.string().default('model'),
   /** Maximum Euclidean distance still treated as the same person. */
   FACE_MATCH_THRESHOLD: z.coerce.number().min(0.3).max(0.8).default(0.45),
+  /**
+   * Return the OTP in the API response. This is an account takeover if it is ever
+   * on in production, so it defaults to off everywhere and the guard below
+   * refuses to start with it enabled outside development.
+   */
+  OTP_EXPOSE_DEV_CODE: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((value) => value === 'true'),
 });
 
 const parsed = EnvSchema.safeParse(process.env);
@@ -39,6 +51,21 @@ if (!parsed.success) {
     .map((issue) => `  - ${issue.path.join('.') || '(root)'}: ${issue.message}`)
     .join('\n');
   throw new Error(`Invalid environment configuration:\n${problems}`);
+}
+
+/**
+ * Cross-field guards. A misconfigured deployment must fail at startup rather than
+ * run in a state that hands out login codes or trusts a placeholder secret.
+ */
+if (parsed.data.NODE_ENV === 'production') {
+  if (parsed.data.OTP_EXPOSE_DEV_CODE) {
+    throw new Error(
+      'OTP_EXPOSE_DEV_CODE must be false in production: it returns the login code in the response.',
+    );
+  }
+  if (parsed.data.SESSION_SECRET.includes('dev-only')) {
+    throw new Error('SESSION_SECRET still holds the development placeholder.');
+  }
 }
 
 export const env = parsed.data;

@@ -8,6 +8,7 @@ import { ZodError } from 'zod';
 import type { ApiErrorBody } from '@mr/shared';
 import { allowedOrigins, env } from './env.js';
 import { AppError } from './errors.js';
+import { prisma } from './db.js';
 import { toErrorDetails } from './validate.js';
 import { analyticsRoutes } from './features/analytics/routes.js';
 import { authRoutes } from './features/auth/routes.js';
@@ -38,9 +39,21 @@ export async function buildApp(): Promise<FastifyInstance> {
     bodyLimit: 256 * 1024,
   });
 
-  // This process serves JSON, not HTML, so a document CSP would be theatre.
-  // The header set that does matter here (nosniff, frameguard, HSTS) is kept.
-  await app.register(helmet, { contentSecurityPolicy: false });
+  // The API serves JSON, not documents, so the CSP here is strict rather than a
+  // page policy: nothing may be framed, nothing may load, and the only accepted
+  // source is the API itself. The web app ships its own CSP from Vite/Vercel.
+  await app.register(helmet, {
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'none'"],
+        frameAncestors: ["'none'"],
+        baseUri: ["'none'"],
+        formAction: ["'none'"],
+      },
+    },
+    crossOriginResourcePolicy: { policy: 'same-site' },
+    referrerPolicy: { policy: 'no-referrer' },
+  });
   await app.register(cors, { origin: allowedOrigins, credentials: true });
   await app.register(cookie, { secret: env.SESSION_SECRET });
   await app.register(rateLimit, { max: 120, timeWindow: '1 minute' });
@@ -55,10 +68,20 @@ export async function buildApp(): Promise<FastifyInstance> {
     },
   );
 
-  app.get('/health', () => ({
-    status: 'ok',
-    uptimeSeconds: Math.round(process.uptime()),
-  }));
+  /**
+   * Liveness and readiness in one place, and honest about the difference: a
+   * process that answers but cannot reach its database is not healthy.
+   */
+  app.get('/health', () => ({ status: 'ok', uptimeSeconds: Math.round(process.uptime()) }));
+
+  app.get('/health/ready', async (_request, reply) => {
+    try {
+      await prisma.$queryRaw`SELECT 1`;
+      return { status: 'ready', database: 'reachable' };
+    } catch {
+      return reply.code(503).send({ status: 'unavailable', database: 'unreachable' });
+    }
+  });
 
   app.setNotFoundHandler((request, reply) =>
     reply.code(404).send(errorBody('NOT_FOUND', 'No such endpoint', String(request.id))),

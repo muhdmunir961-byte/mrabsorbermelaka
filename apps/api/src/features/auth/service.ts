@@ -25,6 +25,13 @@ export interface OtpIssued {
   devCode?: string;
 }
 
+/**
+ * Returning the code is a development convenience that is catastrophic in
+ * production. It is therefore gated on an explicit allow flag, not on NODE_ENV
+ * alone: a deployment that forgets to set NODE_ENV stays closed rather than open.
+ */
+const exposeDevCode = env.NODE_ENV === 'development' && env.OTP_EXPOSE_DEV_CODE;
+
 export async function requestOtp(phone: string): Promise<OtpIssued> {
   const code = String(randomInt(0, 1_000_000)).padStart(6, '0');
   const expiresAt = Date.now() + CODE_TTL_MS;
@@ -35,7 +42,7 @@ export async function requestOtp(phone: string): Promise<OtpIssued> {
   await prisma.employee.findUnique({ where: { phone }, select: { id: true } }).catch(() => null);
 
   const issued: OtpIssued = { challengeExpiresAt: new Date(expiresAt).toISOString() };
-  if (env.NODE_ENV !== 'production') {
+  if (exposeDevCode) {
     issued.devCode = code;
   }
   return issued;
