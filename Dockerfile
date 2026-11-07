@@ -62,7 +62,6 @@ COPY --from=build /app/packages/shared/package.json packages/shared/
 COPY --from=build /app/packages/shared/dist packages/shared/dist
 COPY --from=build /app/apps/api/package.json apps/api/
 COPY --from=build /app/apps/api/dist apps/api/dist
-COPY --from=build /app/apps/api/generated apps/api/generated
 COPY --from=build /app/apps/api/prisma apps/api/prisma
 
 # Uploads are a volume; the image must not assume they are writable state.
@@ -77,4 +76,4 @@ EXPOSE 4000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
   CMD node -e "fetch('http://127.0.0.1:4000/health/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
-CMD ["node", "dist/src/server.js"]
+CMD ["node", "dist/server.js"]
