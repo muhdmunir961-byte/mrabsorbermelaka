@@ -16,8 +16,11 @@ COPY packages/shared packages/shared
 COPY apps/api apps/api
 
 # Shared is compiled first: the API imports its dist, not its sources.
+# A DATABASE_URL is supplied for the generation step only; `generate` reads the
+# schema, not the database, but the Prisma config validates the variable exists.
 RUN npm run build --workspace @mr/shared \
- && npx prisma generate --schema apps/api/prisma/schema.prisma \
+ && DATABASE_URL="postgresql://build:build@localhost:5432/build" \
+    npx prisma generate --schema apps/api/prisma/schema.prisma \
  && npm run build --workspace @mr/api
 
 # `prisma` stays a runtime dependency on purpose: the pre-deploy step runs

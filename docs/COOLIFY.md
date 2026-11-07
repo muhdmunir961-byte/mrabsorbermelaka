@@ -87,6 +87,32 @@ and `CORS_ORIGIN` must list the web origin exactly.
 `VITE_API_BASE_URL` is a **build** argument, not a runtime one: changing it needs
 a rebuild, because Vite inlines it into the bundle.
 
+## Why `prisma generate` fails in a monorepo (and the fix)
+
+Prisma's client generator refuses to run when `@prisma/client` is hoisted away from
+the `prisma` package. The check lives in `prisma/build/cli.js` (function `P8t`): it
+resolves both packages and rejects the pair when the client sits outside the
+`prisma` directory tree. The error it prints is misleading — it suggests installing
+`@prisma/client`, which is already installed.
+
+The symptom is a working dev environment (the client was generated earlier) and a
+failing Docker build, because only a clean install exposes the layout.
+
+The fix used here: keep **both** `prisma` and `@prisma/client` at the workspace
+root. In `package.json`:
+
+- `prisma` is a root `devDependency`, pinned exactly to the same version as
+  `@prisma/client`.
+- `@prisma/client` stays a dependency of `@mr/api`, and npm hoists it to the root.
+
+With that layout, `npx prisma generate --schema apps/api/prisma/schema.prisma` run
+from the repository root succeeds. This was verified against a clean
+`npm ci` in an empty directory, not just against an existing `node_modules`.
+
+Do not pin `prisma` without a version: `npm install prisma` currently resolves to
+8.0.0-rc, whose config loader rejects the `env()` helper used by
+`apps/api/prisma.config.ts`.
+
 ## Order of operations
 
 1. Create the API application, set its variables, deploy. It will fail the health
