@@ -89,11 +89,14 @@ model Branch {
 model Employee {
   id                    String           @id @default(uuid()) @db.Uuid
   fullName              String
+  // Phone stays plaintext: it is the login identifier and needs exact lookup.
+  // Every other personal field below is encrypted at rest (see src/crypto/field.ts).
   phone                 String           @unique
-  identityCardNumber    String           @unique
-  address               String
+  identityCardEnc       String
+  identityCardIndex     String           @unique
+  addressEnc            String
   emergencyContactName  String
-  emergencyContactPhone String
+  emergencyContactPhoneEnc String?
   maritalStatus         String
   role                  Role
   status                EmploymentStatus @default(ACTIVE)
@@ -101,8 +104,8 @@ model Employee {
   avatarUrl             String?
   pinHash               String?
   telegramUserId        String?          @unique
-  baseSalarySen         Int
-  hourlyRateSen         Int
+  baseSalaryEnc         String
+  hourlyRateEnc         String
   leaveEntitlementDays  Int              @default(21)
   branchId              String           @db.Uuid
   createdAt             DateTime         @default(now()) @db.Timestamptz(3)

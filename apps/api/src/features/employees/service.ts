@@ -1,5 +1,6 @@
 import type { EmployeeDirectoryQuery, EmployeeProfile, EmployeeSummary, Page } from '@mr/shared';
 import type { SessionUser } from '../../auth/session.js';
+import { decryptField } from '../../crypto/field.js';
 import { forbidden, notFound } from '../../errors.js';
 import { employeeRepository as repo } from './repository.js';
 
@@ -46,10 +47,14 @@ export async function getProfile(
     status: employee.status,
     avatarUrl: employee.avatarUrl,
     phone: employee.phone,
-    identityCardNumber: employee.identityCardNumber,
-    address: employee.address,
+    // Personal fields are stored encrypted; they are decrypted only here, on the
+    // one route that is allowed to show them.
+    identityCardNumber: decryptField(employee.identityCardEnc),
+    address: decryptField(employee.addressEnc),
     emergencyContactName: employee.emergencyContactName,
-    emergencyContactPhone: employee.emergencyContactPhone,
+    emergencyContactPhone: employee.emergencyContactPhoneEnc
+      ? decryptField(employee.emergencyContactPhoneEnc)
+      : '',
     maritalStatus: employee.maritalStatus,
     joinedOn: employee.joinedOn.toISOString().slice(0, 10),
     employmentStatus: employee.status,

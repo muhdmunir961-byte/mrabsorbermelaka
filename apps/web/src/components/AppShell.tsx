@@ -43,6 +43,11 @@ export function AppShell() {
                 Kelulusan
               </NavLink>
             ) : null}
+            {canApprove ? (
+              <NavLink to="/payroll" className={linkClass}>
+                Payroll
+              </NavLink>
+            ) : null}
             {canSeeOperations ? (
               <NavLink to="/operations" className={linkClass}>
                 Operasi Cawangan

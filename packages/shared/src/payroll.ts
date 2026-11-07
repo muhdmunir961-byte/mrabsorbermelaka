@@ -51,3 +51,30 @@ export const PayrollPeriodQuery = z
   })
   .strict();
 export type PayrollPeriodQuery = z.infer<typeof PayrollPeriodQuery>;
+
+/** A computed payroll for one period, before or after it is saved as a run. */
+export const PayrollPreview = z.object({
+  periodYear: z.int().min(2000).max(2100),
+  periodMonth: z.int().min(1).max(12),
+  lines: z.array(PayrollLine),
+  totalNetPaySen: Sen,
+  totalCommissionSen: Sen,
+  totalDeductionsSen: Sen,
+  employeeCount: z.int().nonnegative(),
+  anomalyCount: z.int().nonnegative(),
+});
+export type PayrollPreview = z.infer<typeof PayrollPreview>;
+
+/** What an admin may adjust on a line before the run is submitted. */
+export const PayrollLineInput = z
+  .object({
+    overtimeHours: OvertimeHours,
+    deductionsSen: Sen,
+  })
+  .strict();
+export type PayrollLineInput = z.infer<typeof PayrollLineInput>;
+
+export const PayrollRunDetail = PayrollRun.extend({
+  lines: z.array(PayrollLine),
+});
+export type PayrollRunDetail = z.infer<typeof PayrollRunDetail>;

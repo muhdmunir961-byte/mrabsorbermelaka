@@ -15,6 +15,15 @@ const EnvSchema = z.object({
   SESSION_SECRET: z.string().min(32, 'SESSION_SECRET must be at least 32 characters'),
   /** Comma-separated list of allowed browser origins. */
   CORS_ORIGIN: z.string().default('http://localhost:5173'),
+  /** 32-byte AES-256 key, base64. Encrypts the PII columns at rest. */
+  FIELD_ENCRYPTION_KEY: z
+    .string()
+    .min(1, 'FIELD_ENCRYPTION_KEY is required')
+    .refine((value) => Buffer.from(value, 'base64').length === 32, {
+      message: 'FIELD_ENCRYPTION_KEY must decode to exactly 32 bytes',
+    }),
+  /** Separate key for the deterministic blind index used by equality lookups. */
+  FIELD_INDEX_KEY: z.string().min(32, 'FIELD_INDEX_KEY must be at least 32 characters'),
 });
 
 const parsed = EnvSchema.safeParse(process.env);

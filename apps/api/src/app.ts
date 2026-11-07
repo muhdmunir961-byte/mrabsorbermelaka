@@ -14,6 +14,7 @@ import { attendanceRoutes } from './features/attendance/routes.js';
 import { employeeRoutes } from './features/employees/routes.js';
 import { jobRoutes } from './features/jobs/routes.js';
 import { leaveRoutes } from './features/leave/routes.js';
+import { payrollRoutes } from './features/payroll/routes.js';
 
 function errorBody(
   code: ApiErrorBody['error']['code'],
@@ -89,6 +90,7 @@ export async function buildApp(): Promise<FastifyInstance> {
       await scope.register(jobRoutes, { prefix: '/jobs' });
       await scope.register(employeeRoutes, { prefix: '/employees' });
       await scope.register(leaveRoutes, { prefix: '/leave' });
+      await scope.register(payrollRoutes, { prefix: '/payroll' });
     },
     { prefix: '/api/v1' },
   );

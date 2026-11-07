@@ -5,6 +5,7 @@ import { ApprovalsPage } from './pages/ApprovalsPage';
 import { LeavePage } from './pages/LeavePage';
 import { LoginPage } from './pages/LoginPage';
 import { OperationsPage } from './pages/OperationsPage';
+import { PayrollPage } from './pages/PayrollPage';
 import { StaffHomePage } from './pages/StaffHomePage';
 
 export function App() {
@@ -41,6 +42,10 @@ export function App() {
         <Route
           path="/approvals"
           element={canApprove ? <ApprovalsPage /> : <Navigate to="/home" replace />}
+        />
+        <Route
+          path="/payroll"
+          element={canApprove ? <PayrollPage /> : <Navigate to="/home" replace />}
         />
         <Route
           path="/operations"

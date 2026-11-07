@@ -1,5 +1,6 @@
 import { prisma } from '../src/db.js';
 import { hashPin } from '../src/auth/pin.js';
+import { blindIndex, encryptField, encryptSen } from '../src/crypto/field.js';
 
 /** Every demo employee uses this PIN for the clock-in fallback. Never use in production. */
 const DEMO_PIN = '123456';
@@ -150,11 +151,31 @@ async function main(): Promise<void> {
   const pinHash = hashPin(DEMO_PIN);
   for (const { branch, ...person } of PEOPLE) {
     const branchId = branchIds.get(branch) ?? '';
+    const {
+      identityCardNumber,
+      address,
+      emergencyContactPhone,
+      baseSalarySen,
+      hourlyRateSen,
+      ...rest
+    } = person;
+
+    // Personal data goes in encrypted; only the blind index is searchable.
+    const encrypted = {
+      identityCardEnc: encryptField(identityCardNumber),
+      identityCardIndex: blindIndex(identityCardNumber),
+      addressEnc: encryptField(address),
+      emergencyContactPhoneEnc: encryptField(emergencyContactPhone),
+      baseSalaryEnc: encryptSen(baseSalarySen),
+      hourlyRateEnc: encryptSen(hourlyRateSen),
+    };
+
     const record = await prisma.employee.upsert({
       where: { phone: person.phone },
-      update: { pinHash },
+      update: { pinHash, ...encrypted },
       create: {
-        ...person,
+        ...rest,
+        ...encrypted,
         pinHash,
         branchId,
         joinedOn: new Date('2022-01-12T00:00:00.000Z'),
