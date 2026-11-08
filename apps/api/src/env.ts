@@ -78,6 +78,10 @@ const EnvSchema = z.object({
     .regex(/^[A-Za-z0-9_]{5,32}$/)
     .optional(),
   TELEGRAM_WEBHOOK_SECRET: z.string().min(32).optional(),
+  TELEGRAM_APPROVAL_CHAT_ID: z
+    .string()
+    .regex(/^-?\d+$/)
+    .optional(),
 });
 
 const parsed = EnvSchema.safeParse(process.env);
