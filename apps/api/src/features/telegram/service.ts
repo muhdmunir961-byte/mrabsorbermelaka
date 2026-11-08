@@ -58,3 +58,23 @@ export async function consumeTelegramLink(token: string, telegramUserId: string)
 export function telegramWebhookSecret(): string {
   return requireTelegramConfig().secret;
 }
+
+export async function sendTelegramMessage(chatId: string, text: string): Promise<void> {
+  if (!env.TELEGRAM_BOT_TOKEN) throw new Error('Telegram bot token is not configured');
+  const response = await fetch(
+    `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`,
+    {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ chat_id: chatId, text }),
+    },
+  );
+  if (!response.ok) throw new Error(`Telegram sendMessage failed with ${response.status}`);
+}
+
+export async function sendOtpToTelegram(telegramUserId: string, code: string): Promise<void> {
+  await sendTelegramMessage(
+    telegramUserId,
+    `Kod masuk Mr. Absorber: ${code}\nKod ini tamat dalam 5 minit.`,
+  );
+}

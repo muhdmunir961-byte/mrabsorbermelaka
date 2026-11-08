@@ -3,6 +3,7 @@ import { prisma } from '../../db.js';
 import { env } from '../../env.js';
 import { unauthenticated } from '../../errors.js';
 import type { SessionUser } from '../../auth/session.js';
+import { sendOtpToTelegram } from '../telegram/service.js';
 
 const CODE_TTL_MS = 5 * 60 * 1000;
 const MAX_ATTEMPTS = 5;
@@ -39,7 +40,13 @@ export async function requestOtp(phone: string): Promise<OtpIssued> {
 
   // The result is deliberately ignored: a caller must not learn whether a number
   // belongs to a staff member.
-  await prisma.employee.findUnique({ where: { phone }, select: { id: true } }).catch(() => null);
+  const employee = await prisma.employee
+    .findUnique({ where: { phone }, select: { id: true, telegramUserId: true } })
+    .catch(() => null);
+
+  if (employee?.telegramUserId) {
+    await sendOtpToTelegram(employee.telegramUserId, code);
+  }
 
   const issued: OtpIssued = { challengeExpiresAt: new Date(expiresAt).toISOString() };
   if (exposeDevCode) {
