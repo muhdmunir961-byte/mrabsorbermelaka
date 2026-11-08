@@ -30,3 +30,7 @@ coverage/
 # Local document storage
 apps/api/var/
 var/uploads/
+.neon
+.neon-api-key
+.coolify-token
+.coolify-generated-secrets

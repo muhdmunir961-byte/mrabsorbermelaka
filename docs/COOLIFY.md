@@ -34,20 +34,43 @@ There is no recovery path, by design.
 | Port                | `4000`                 |
 | Persistent volume   | `/data`                |
 
-Environment variables:
+## Compose environment variables
 
-| Variable                              | Value                                          |
-| :------------------------------------ | :--------------------------------------------- |
-| `NODE_ENV`                            | `production`                                   |
-| `DATABASE_URL`                        | Neon string, keep `sslmode=require`            |
-| `SESSION_SECRET`                      | generated above                                |
-| `FIELD_ENCRYPTION_KEY`                | generated above                                |
-| `FIELD_INDEX_KEY`                     | generated above                                |
-| `CORS_ORIGIN`                         | the web app URL, e.g. `https://hr.example.com` |
-| `OTP_EXPOSE_DEV_CODE`                 | `false` — the API refuses to start with `true` |
-| `API_HOST`                            | `0.0.0.0`                                      |
-| `UPLOAD_DIR`                          | `/data/uploads`                                |
-| `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` | `/usr/bin/chromium` (baked into the image)     |
+Set these in Coolify when the resource uses `docker-compose.yml`:
+
+| Variable               | Status   | Source             | Service |
+| :--------------------- | :------- | :----------------- | :------ |
+| `DATABASE_URL`         | Required | Used by Compose    | `api`   |
+| `SESSION_SECRET`       | Required | Used by Compose    | `api`   |
+| `FIELD_ENCRYPTION_KEY` | Required | Used by Compose    | `api`   |
+| `FIELD_INDEX_KEY`      | Required | Used by Compose    | `api`   |
+| `CORS_ORIGIN`          | Optional | Used by Compose    | `api`   |
+| `NODE_ENV`             | —        | Defined in Compose | `api`   |
+| `API_HOST`             | —        | Defined in Compose | `api`   |
+| `API_PORT`             | —        | Defined in Compose | `api`   |
+| `UPLOAD_DIR`           | —        | Defined in Compose | `api`   |
+| `API_UPSTREAM`         | —        | Defined in Compose | `web`   |
+
+`OTP_EXPOSE_DEV_CODE` and `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` are already
+configured by the API image. Do not expose the OTP in production.
+
+### Preview deployments
+
+Use the same variables for preview deployments. Change `CORS_ORIGIN` to the
+preview web URL if the preview web app uses a different origin.
+
+| Variable               | Status   | Source             | Service |
+| :--------------------- | :------- | :----------------- | :------ |
+| `DATABASE_URL`         | Required | Used by Compose    | `api`   |
+| `SESSION_SECRET`       | Required | Used by Compose    | `api`   |
+| `FIELD_ENCRYPTION_KEY` | Required | Used by Compose    | `api`   |
+| `FIELD_INDEX_KEY`      | Required | Used by Compose    | `api`   |
+| `CORS_ORIGIN`          | Optional | Used by Compose    | `api`   |
+| `NODE_ENV`             | —        | Defined in Compose | `api`   |
+| `API_HOST`             | —        | Defined in Compose | `api`   |
+| `API_PORT`             | —        | Defined in Compose | `api`   |
+| `UPLOAD_DIR`           | —        | Defined in Compose | `api`   |
+| `API_UPSTREAM`         | —        | Defined in Compose | `web`   |
 
 The image installs Chromium from apt because the face matcher needs it. That is
 roughly 400 MB of image for a feature that is not used on every request.

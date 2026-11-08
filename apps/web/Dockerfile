@@ -7,7 +7,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 COPY packages/shared/package.json packages/shared/
 COPY apps/web/package.json apps/web/
-RUN npm ci --workspace @mr/shared --workspace @mr/web --include-workspace-root
+RUN npm ci --include=dev --workspace @mr/shared --workspace @mr/web --include-workspace-root
 
 COPY tsconfig.base.json ./
 COPY packages/shared packages/shared

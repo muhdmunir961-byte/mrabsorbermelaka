@@ -20,10 +20,13 @@ services:
       API_HOST: 0.0.0.0
       API_PORT: 4000
       # Required: no default exists, and startup refuses without them.
-      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL is required}
-      SESSION_SECRET: ${SESSION_SECRET:?SESSION_SECRET is required}
-      FIELD_ENCRYPTION_KEY: ${FIELD_ENCRYPTION_KEY:?FIELD_ENCRYPTION_KEY is required}
-      FIELD_INDEX_KEY: ${FIELD_INDEX_KEY:?FIELD_INDEX_KEY is required}
+      # These values are validated by the API at runtime. Do not use the
+      # `${VAR:?message}` form here because Coolify builds the image before it
+      # injects runtime environment variables.
+      DATABASE_URL: ${DATABASE_URL:-}
+      SESSION_SECRET: ${SESSION_SECRET:-}
+      FIELD_ENCRYPTION_KEY: ${FIELD_ENCRYPTION_KEY:-}
+      FIELD_INDEX_KEY: ${FIELD_INDEX_KEY:-}
       # Optional; the application has sensible defaults.
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
       UPLOAD_DIR: /data/uploads

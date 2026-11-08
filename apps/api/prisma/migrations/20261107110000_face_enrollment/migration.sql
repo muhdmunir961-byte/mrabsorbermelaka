@@ -4,7 +4,7 @@
 
 CREATE TABLE "FaceEnrollment" (
     "id" TEXT NOT NULL,
-    "employeeId" TEXT NOT NULL,
+    "employeeId" UUID NOT NULL,
     "referenceEnc" TEXT NOT NULL,
     "descriptorEnc" TEXT NOT NULL,
     "enrolledAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,

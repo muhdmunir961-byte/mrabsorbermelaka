@@ -9,7 +9,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 COPY packages/shared/package.json packages/shared/
 COPY apps/api/package.json apps/api/
-RUN npm ci --workspace @mr/shared --workspace @mr/api --include-workspace-root
+RUN npm ci --include=dev --workspace @mr/shared --workspace @mr/api --include-workspace-root
 
 COPY tsconfig.base.json ./
 COPY packages/shared packages/shared
@@ -34,6 +34,10 @@ RUN npm prune --omit=dev
 FROM node:22-bookworm-slim AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
+# Coolify reaches the process through the container network, so localhost is not
+# a valid bind address for the deployed API.
+ENV API_HOST=0.0.0.0
+ENV API_PORT=4000
 
 # Chromium is a hard runtime dependency of the face matcher, not an optional
 # extra: without these libraries /face/* fails while everything else works.

@@ -9,6 +9,34 @@ const here = dirname(fileURLToPath(import.meta.url));
 const envPath = process.env.DOTENV_CONFIG_PATH ?? resolve(here, '../.env');
 loadEnv({ path: envPath, quiet: true });
 
+/**
+ * Names the variables that arrived, never their values. When a deployment fails
+ * on configuration this is the difference between "something is wrong" and
+ * "the container received none of them", which are different fixes.
+ */
+const TRACKED = [
+  'NODE_ENV',
+  'DATABASE_URL',
+  'SESSION_SECRET',
+  'FIELD_ENCRYPTION_KEY',
+  'FIELD_INDEX_KEY',
+  'CORS_ORIGIN',
+  'API_HOST',
+  'API_PORT',
+  'UPLOAD_DIR',
+] as const;
+
+function describeEnvironment(): string {
+  const present = TRACKED.filter((name) => (process.env[name] ?? '') !== '');
+  const missing = TRACKED.filter((name) => (process.env[name] ?? '') === '');
+  return [
+    `received ${present.length}/${TRACKED.length} tracked variables`,
+    present.length > 0 ? `present: ${present.join(', ')}` : 'present: none',
+    missing.length > 0 ? `missing: ${missing.join(', ')}` : 'missing: none',
+    `dotenv file: ${envPath}`,
+  ].join(' | ');
+}
+
 const EnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
@@ -52,7 +80,7 @@ if (!parsed.success) {
   const problems = parsed.error.issues
     .map((issue) => `  - ${issue.path.join('.') || '(root)'}: ${issue.message}`)
     .join('\n');
-  throw new Error(`Invalid environment configuration:\n${problems}`);
+  throw new Error(`Invalid environment configuration:\n${problems}\n${describeEnvironment()}`);
 }
 
 /**
