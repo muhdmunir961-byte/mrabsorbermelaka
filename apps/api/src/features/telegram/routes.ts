@@ -71,7 +71,17 @@ export const telegramRoutes: FastifyPluginAsync = async (app) => {
       );
       return { status: 'contact_linked' };
     }
-    if (text === '/start' || text.startsWith('/start ')) {
+    if (text.startsWith('/start ')) {
+      const token = text.slice('/start '.length).trim();
+      if (!token || !update.message) return { status: 'ignored' };
+      await consumeTelegramLink(token, String(update.message.from.id));
+      await sendTelegramMessage(
+        String(update.message.from.id),
+        'Telegram berjaya dipautkan. Kod masuk akan dihantar di sini.',
+      );
+      return { status: 'linked' };
+    }
+    if (text === '/start') {
       await sendTelegramMessage(
         String(update.message?.from.id),
         'Tekan butang Kongsi nombor telefon supaya kami boleh sahkan akaun anda.',
@@ -83,14 +93,6 @@ export const telegramRoutes: FastifyPluginAsync = async (app) => {
       );
       return { status: 'help' };
     }
-    if (!text.startsWith('/start ')) return { status: 'ignored' };
-    const token = text.slice('/start '.length).trim();
-    if (!token || !update.message) return { status: 'ignored' };
-    await consumeTelegramLink(token, String(update.message.from.id));
-    await sendTelegramMessage(
-      String(update.message.from.id),
-      'Telegram berjaya dipautkan. Kod masuk akan dihantar di sini.',
-    );
-    return { status: 'linked' };
+    return { status: 'ignored' };
   });
 };

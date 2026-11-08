@@ -34,3 +34,4 @@ var/uploads/
 .neon-api-key
 .coolify-token
 .coolify-generated-secrets
+.env.telegram.local

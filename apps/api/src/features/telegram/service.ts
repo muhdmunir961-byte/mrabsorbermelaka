@@ -115,6 +115,23 @@ export function telegramWebhookSecret(): string {
   return requireTelegramConfig().secret;
 }
 
+export async function registerTelegramWebhook(): Promise<void> {
+  if (!env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_WEBHOOK_SECRET || !env.TELEGRAM_WEBHOOK_URL) {
+    return;
+  }
+  const response = await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/setWebhook`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      url: env.TELEGRAM_WEBHOOK_URL,
+      secret_token: env.TELEGRAM_WEBHOOK_SECRET,
+      allowed_updates: ['message', 'callback_query'],
+    }),
+    signal: AbortSignal.timeout(10_000),
+  });
+  if (!response.ok) throw new Error(`Telegram setWebhook failed with ${response.status}`);
+}
+
 export async function sendTelegramMessage(
   chatId: string,
   text: string,
