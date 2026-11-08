@@ -72,6 +72,12 @@ const EnvSchema = z.object({
     .enum(['true', 'false'])
     .default('false')
     .transform((value) => value === 'true'),
+  TELEGRAM_BOT_TOKEN: z.string().min(1).optional(),
+  TELEGRAM_BOT_USERNAME: z
+    .string()
+    .regex(/^[A-Za-z0-9_]{5,32}$/)
+    .optional(),
+  TELEGRAM_WEBHOOK_SECRET: z.string().min(32).optional(),
 });
 
 const parsed = EnvSchema.safeParse(process.env);

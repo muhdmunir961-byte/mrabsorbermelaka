@@ -34,6 +34,7 @@ const DECISION_LABEL: Record<string, string> = {
 };
 
 const StatusResult = z.object({ id: z.uuid(), status: z.string() });
+const TelegramLinkResult = z.object({ url: z.url(), expiresAt: z.string() });
 
 export function EmployeeProfilePage() {
   const { employeeId } = useParams<{ employeeId: string }>();
@@ -44,6 +45,8 @@ export function EmployeeProfilePage() {
   const [busy, setBusy] = useState(false);
   const [confirming, setConfirming] = useState<'SUSPENDED' | 'TERMINATED' | null>(null);
   const [reason, setReason] = useState('');
+  const [telegramBusy, setTelegramBusy] = useState(false);
+  const [telegramNotice, setTelegramNotice] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!employeeId) return;
@@ -99,6 +102,21 @@ export function EmployeeProfilePage() {
 
   const isAdmin = user?.role === 'ADMIN_HR' || user?.role === 'OWNER';
   const isSelf = user?.employeeId === profile.id;
+
+  async function linkTelegram() {
+    setTelegramBusy(true);
+    setTelegramNotice(null);
+    setError(null);
+    try {
+      const result = await api('/telegram/link', TelegramLinkResult, { method: 'POST' });
+      window.open(result.url, '_blank', 'noopener,noreferrer');
+      setTelegramNotice('Pautan Telegram dibuka. Tekan Start dalam bot sebelum pautan tamat.');
+    } catch (caught) {
+      setError(caught instanceof ApiError ? caught.message : 'Pautan Telegram gagal dibuat.');
+    } finally {
+      setTelegramBusy(false);
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -179,6 +197,34 @@ export function EmployeeProfilePage() {
           Medan ini disimpan terenkripsi dan dinyahsulit hanya untuk paparan ini.
         </p>
       </section>
+
+      {isSelf ? (
+        <section
+          aria-labelledby="telegram-heading"
+          className="rounded-panel border border-border bg-surface p-5"
+        >
+          <h2
+            id="telegram-heading"
+            className="text-sm font-semibold uppercase tracking-wide text-ink-muted"
+          >
+            Telegram
+          </h2>
+          <p className="mt-2 text-sm text-ink-muted">
+            Pautkan Telegram anda sekali untuk menerima kod masuk dengan lebih mudah.
+          </p>
+          <button
+            type="button"
+            onClick={() => void linkTelegram()}
+            disabled={telegramBusy}
+            className="mt-3 min-h-11 rounded-control bg-accent px-4 py-2.5 text-sm font-bold text-accent-ink disabled:opacity-50"
+          >
+            {telegramBusy ? 'Menyediakan pautan…' : 'Sahkan Telegram'}
+          </button>
+          <p role="status" aria-live="polite" className="mt-3 min-h-5 text-sm text-ink-muted">
+            {telegramNotice}
+          </p>
+        </section>
+      ) : null}
 
       <div className="grid gap-4 lg:grid-cols-2">
         <section

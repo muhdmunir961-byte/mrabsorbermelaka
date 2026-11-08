@@ -32,6 +32,15 @@ if [[ -z "$DATABASE_URL" ]]; then
   printf 'DATABASE_URL is missing from .env.local.\n' >&2
   exit 1
 fi
+# dotenv files commonly wrap connection strings in quotes. Coolify must receive
+# the URL value without those quote characters, otherwise the runtime parser
+# treats the entire quoted string as an invalid connection string.
+if [[ "$DATABASE_URL" == '"'*'"' ]]; then
+  DATABASE_URL="${DATABASE_URL:1:${#DATABASE_URL}-2}"
+fi
+if [[ "$DATABASE_URL" == "'"*"'" ]]; then
+  DATABASE_URL="${DATABASE_URL:1:${#DATABASE_URL}-2}"
+fi
 
 SECRET_FILE="$ROOT_DIR/.coolify-generated-secrets"
 if [[ ! -f "$SECRET_FILE" ]]; then
@@ -82,6 +91,9 @@ post_env API_HOST 0.0.0.0
 post_env API_PORT 4000
 post_env UPLOAD_DIR /data/uploads
 post_env OTP_EXPOSE_DEV_CODE false
+if [[ -n "${TELEGRAM_BOT_TOKEN:-}" ]]; then post_env TELEGRAM_BOT_TOKEN "$TELEGRAM_BOT_TOKEN"; fi
+if [[ -n "${TELEGRAM_BOT_USERNAME:-}" ]]; then post_env TELEGRAM_BOT_USERNAME "$TELEGRAM_BOT_USERNAME"; fi
+if [[ -n "${TELEGRAM_WEBHOOK_SECRET:-}" ]]; then post_env TELEGRAM_WEBHOOK_SECRET "$TELEGRAM_WEBHOOK_SECRET"; fi
 
 unset COOLIFY_TOKEN DATABASE_URL
 printf 'Coolify environment variables sent for application %s.\n' "$APPLICATION_UUID"

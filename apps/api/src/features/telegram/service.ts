@@ -1,0 +1,60 @@
+import { createHash, randomBytes } from 'node:crypto';
+import { prisma } from '../../db.js';
+import { env } from '../../env.js';
+import { conflict, notFound } from '../../errors.js';
+
+const TOKEN_TTL_MS = 10 * 60 * 1000;
+
+function requireTelegramConfig(): { username: string; secret: string } {
+  if (!env.TELEGRAM_BOT_USERNAME || !env.TELEGRAM_WEBHOOK_SECRET) {
+    throw new Error('Telegram verification is not configured');
+  }
+  return { username: env.TELEGRAM_BOT_USERNAME, secret: env.TELEGRAM_WEBHOOK_SECRET };
+}
+
+function hashToken(token: string): string {
+  return createHash('sha256').update(token).digest('hex');
+}
+
+export async function createTelegramLink(
+  employeeId: string,
+): Promise<{ url: string; expiresAt: string }> {
+  const { username } = requireTelegramConfig();
+  if (!env.TELEGRAM_BOT_TOKEN) throw new Error('Telegram bot token is not configured');
+
+  const employee = await prisma.employee.findUnique({
+    where: { id: employeeId },
+    select: { id: true },
+  });
+  if (!employee) throw notFound('That employee does not exist');
+
+  await prisma.telegramLinkToken.deleteMany({ where: { employeeId, usedAt: null } });
+  const token = randomBytes(32).toString('base64url');
+  const expiresAt = new Date(Date.now() + TOKEN_TTL_MS);
+  await prisma.telegramLinkToken.create({
+    data: { tokenHash: hashToken(token), employeeId, expiresAt },
+  });
+
+  return { url: `https://t.me/${username}?start=${token}`, expiresAt: expiresAt.toISOString() };
+}
+
+export async function consumeTelegramLink(token: string, telegramUserId: string): Promise<void> {
+  const row = await prisma.telegramLinkToken.findUnique({ where: { tokenHash: hashToken(token) } });
+  if (!row || row.usedAt || row.expiresAt <= new Date())
+    throw conflict('Pautan Telegram sudah tidak sah.');
+
+  const existing = await prisma.employee.findFirst({
+    where: { telegramUserId, NOT: { id: row.employeeId } },
+    select: { id: true },
+  });
+  if (existing) throw conflict('Akaun Telegram ini sudah dipautkan kepada pekerja lain.');
+
+  await prisma.$transaction([
+    prisma.employee.update({ where: { id: row.employeeId }, data: { telegramUserId } }),
+    prisma.telegramLinkToken.update({ where: { id: row.id }, data: { usedAt: new Date() } }),
+  ]);
+}
+
+export function telegramWebhookSecret(): string {
+  return requireTelegramConfig().secret;
+}

@@ -19,6 +19,7 @@ import { employeeRoutes } from './features/employees/routes.js';
 import { jobRoutes } from './features/jobs/routes.js';
 import { leaveRoutes } from './features/leave/routes.js';
 import { payrollRoutes } from './features/payroll/routes.js';
+import { telegramRoutes } from './features/telegram/routes.js';
 
 function errorBody(
   code: ApiErrorBody['error']['code'],
@@ -127,6 +128,7 @@ export async function buildApp(): Promise<FastifyInstance> {
       await scope.register(employeeRoutes, { prefix: '/employees' });
       await scope.register(leaveRoutes, { prefix: '/leave' });
       await scope.register(payrollRoutes, { prefix: '/payroll' });
+      await scope.register(telegramRoutes, { prefix: '/telegram' });
       await scope.register(analyticsRoutes, { prefix: '/analytics' });
       await scope.register(documentRoutes, { prefix: '/documents' });
       await scope.register(faceRoutes, { prefix: '/face' });

@@ -87,54 +87,68 @@ model Branch {
 }
 
 model Employee {
-  id                    String           @id @default(uuid()) @db.Uuid
-  fullName              String
+  id                       String           @id @default(uuid()) @db.Uuid
+  fullName                 String
   // Phone stays plaintext: it is the login identifier and needs exact lookup.
   // Every other personal field below is encrypted at rest (see src/crypto/field.ts).
-  phone                 String           @unique
-  identityCardEnc       String
-  identityCardIndex     String           @unique
-  addressEnc            String
-  emergencyContactName  String
+  phone                    String           @unique
+  identityCardEnc          String
+  identityCardIndex        String           @unique
+  addressEnc               String
+  emergencyContactName     String
   emergencyContactPhoneEnc String?
-  maritalStatus         String
-  role                  Role
-  status                EmploymentStatus @default(ACTIVE)
-  joinedOn              DateTime         @db.Date
-  avatarUrl             String?
-  pinHash               String?
-  telegramUserId        String?          @unique
-  baseSalaryEnc         String
-  hourlyRateEnc         String
-  leaveEntitlementDays  Int              @default(21)
-  branchId              String           @db.Uuid
-  createdAt             DateTime         @default(now()) @db.Timestamptz(3)
-  updatedAt             DateTime         @updatedAt @db.Timestamptz(3)
+  maritalStatus            String
+  role                     Role
+  status                   EmploymentStatus @default(ACTIVE)
+  joinedOn                 DateTime         @db.Date
+  avatarUrl                String?
+  pinHash                  String?
+  telegramUserId           String?          @unique
+  baseSalaryEnc            String
+  hourlyRateEnc            String
+  leaveEntitlementDays     Int              @default(21)
+  branchId                 String           @db.Uuid
+  createdAt                DateTime         @default(now()) @db.Timestamptz(3)
+  updatedAt                DateTime         @updatedAt @db.Timestamptz(3)
 
-  branch        Branch             @relation(fields: [branchId], references: [id], onDelete: Restrict)
-  attendance    AttendanceRecord[]
-  jobsAssigned  Job[]              @relation("JobAssignee")
-  leaveRequests LeaveRequest[]
-  leaveBalances LeaveBalance[]
-  attachments   Attachment[]
-  notifications Notification[]
-  announcements Announcement[]
-  payrollLines  PayrollLine[]
-  faceEnrollment FaceEnrollment?
+  branch             Branch              @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  attendance         AttendanceRecord[]
+  jobsAssigned       Job[]               @relation("JobAssignee")
+  leaveRequests      LeaveRequest[]
+  leaveBalances      LeaveBalance[]
+  attachments        Attachment[]
+  notifications      Notification[]
+  announcements      Announcement[]
+  payrollLines       PayrollLine[]
+  faceEnrollment     FaceEnrollment?
+  telegramLinkTokens TelegramLinkToken[]
 
   @@index([branchId, status])
   @@index([role])
 }
 
+model TelegramLinkToken {
+  id         String    @id @default(uuid()) @db.Uuid
+  tokenHash  String    @unique
+  employeeId String    @db.Uuid
+  expiresAt  DateTime  @db.Timestamptz(3)
+  usedAt     DateTime? @db.Timestamptz(3)
+  createdAt  DateTime  @default(now()) @db.Timestamptz(3)
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId, expiresAt])
+}
+
 model FaceEnrollment {
-  id           String   @id @default(uuid()) @db.Uuid
-  employeeId   String   @unique @db.Uuid
+  id            String   @id @default(uuid()) @db.Uuid
+  employeeId    String   @unique @db.Uuid
   /// AES-256-GCM ciphertext of the enrolled photo (data URL).
-  referenceEnc String
+  referenceEnc  String
   /// AES-256-GCM ciphertext of the 128-float descriptor as JSON.
   descriptorEnc String
-  enrolledAt   DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt    DateTime @updatedAt @db.Timestamptz(3)
+  enrolledAt    DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime @updatedAt @db.Timestamptz(3)
 
   employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 }
