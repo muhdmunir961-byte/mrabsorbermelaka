@@ -72,7 +72,7 @@ export const telegramRoutes: FastifyPluginAsync = async (app) => {
       );
       return { status: 'contact_linked' };
     }
-    if (text === '/start') {
+    if (text === '/start' || text.startsWith('/start ')) {
       await sendTelegramMessage(
         String(update.message?.from.id),
         'Tekan butang Kongsi nombor telefon supaya kami boleh sahkan akaun anda.',

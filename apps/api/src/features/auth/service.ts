@@ -51,7 +51,7 @@ export async function requestOtp(phone: string): Promise<OtpIssued> {
 
   const issued: OtpIssued = {
     challengeExpiresAt: new Date(expiresAt).toISOString(),
-    ...(employee?.telegramUserId ? {} : { needsTelegramLink: true }),
+    ...(!employee?.telegramUserId ? { needsTelegramLink: true } : {}),
   };
   if (exposeDevCode) {
     issued.devCode = code;

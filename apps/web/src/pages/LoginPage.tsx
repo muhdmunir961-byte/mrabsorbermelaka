@@ -10,6 +10,7 @@ const OtpIssuedSchema = z.object({
   needsTelegramLink: z.boolean().optional(),
 });
 const TelegramLinkSchema = z.object({ url: z.url(), expiresAt: z.string() });
+const TELEGRAM_BOT_URL = 'https://t.me/mrabsorbermelaka_bot';
 
 const SignedInSchema = z.object({
   employeeId: z.uuid(),
@@ -30,8 +31,6 @@ const fieldClass =
   'mt-1 w-full rounded-control border border-border-strong bg-surface px-3 py-2.5 text-sm';
 const submitClass =
   'w-full rounded-control bg-accent px-4 py-2.5 text-sm font-bold text-accent-ink disabled:opacity-60';
-
-const TELEGRAM_BOT_URL = 'https://t.me/mrabsorbermelaka_bot';
 
 export function LoginPage({ mode = 'login' }: { mode?: 'login' | 'register' }) {
   const { signIn } = useSession();
@@ -59,7 +58,8 @@ export function LoginPage({ mode = 'login' }: { mode?: 'login' | 'register' }) {
           method: 'POST',
           body: JSON.stringify({ phone: normalizedPhone }),
         });
-        window.open(link.url, '_blank', 'noopener,noreferrer');
+        void link;
+        window.open(TELEGRAM_BOT_URL, '_blank', 'noopener,noreferrer');
       }
       setStage('code');
     } catch (caught) {
