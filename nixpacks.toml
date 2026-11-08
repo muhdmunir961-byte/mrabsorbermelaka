@@ -1,0 +1,31 @@
+# Nixpacks plan for this monorepo.
+#
+# Purpose: let Coolify deploy the API by pointing at the repository and nothing
+# else. Without this file the auto-detector sees a root package.json, assumes a
+# single Node app, and fails on the workspace layout.
+#
+# The canonical build is the Dockerfile; this exists so a "just add the repo"
+# deploy also works. Keep the two in step.
+
+[phases.setup]
+nixPkgs = ["nodejs_22", "openssl"]
+
+[phases.install]
+# Only the workspaces the API needs, plus the root so `prisma` is available.
+cmds = [
+  "npm ci --workspace @mr/shared --workspace @mr/api --include-workspace-root",
+]
+
+[phases.build]
+# The generated Prisma client is required by the TypeScript build, and the Prisma
+# config validates that DATABASE_URL exists even though generate only reads the
+# schema. A placeholder is enough here; the real URL arrives at runtime.
+cmds = [
+  "npm run build --workspace @mr/shared",
+  "DATABASE_URL=postgresql://build:build@localhost:5432/build npx prisma generate --schema apps/api/prisma/schema.prisma",
+  "npm run build --workspace @mr/api",
+  "npm prune --omit=dev",
+]
+
+[start]
+cmd = "node apps/api/dist/server.js"

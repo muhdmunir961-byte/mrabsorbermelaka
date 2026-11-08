@@ -14,7 +14,11 @@
   "scripts": {
     "dev:api": "npm run dev --workspace @mr/api",
     "dev:web": "npm run dev --workspace @mr/web",
-    "build": "npm run build --workspaces --if-present",
+    "build": "npm run build --workspace @mr/shared && npm run build --workspace @mr/api",
+    "build:web": "npm run build --workspace @mr/web",
+    "start": "node apps/api/dist/server.js",
+    "prestart": "npm run build",
+    "db:migrate:deploy": "prisma migrate deploy --schema apps/api/prisma/schema.prisma",
     "db:generate": "npm run db:generate --workspace @mr/api",
     "db:migrate": "npm run db:migrate --workspace @mr/api",
     "db:seed": "npm run db:seed --workspace @mr/api",
