@@ -130,12 +130,13 @@ model Employee {
 model TelegramLinkToken {
   id         String    @id @default(uuid()) @db.Uuid
   tokenHash  String    @unique
-  employeeId String    @db.Uuid
+  employeeId String?   @db.Uuid
+  phone      String
   expiresAt  DateTime  @db.Timestamptz(3)
   usedAt     DateTime? @db.Timestamptz(3)
   createdAt  DateTime  @default(now()) @db.Timestamptz(3)
 
-  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employee Employee? @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 
   @@index([employeeId, expiresAt])
 }
@@ -325,7 +326,7 @@ model Notification {
   readAt     DateTime? @db.Timestamptz(3)
   createdAt  DateTime  @default(now()) @db.Timestamptz(3)
 
-  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employee Employee? @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 
   @@index([employeeId, readAt])
 }

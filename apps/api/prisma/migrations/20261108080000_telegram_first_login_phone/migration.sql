@@ -1,0 +1,2 @@
+ALTER TABLE "TelegramLinkToken" ALTER COLUMN "employeeId" DROP NOT NULL;
+ALTER TABLE "TelegramLinkToken" ADD COLUMN "phone" TEXT NOT NULL DEFAULT '';

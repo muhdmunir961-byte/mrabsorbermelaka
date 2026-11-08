@@ -7,7 +7,7 @@ import {
   createTelegramLink,
   createTelegramLinkForPhone,
   consumeTelegramLink,
-  linkContactAndSendOtp,
+  consumeFirstLoginLink,
   sendTelegramMessage,
   decideTelegramLeave,
   telegramWebhookSecret,
@@ -65,7 +65,7 @@ export const telegramRoutes: FastifyPluginAsync = async (app) => {
       const phone = update.message.contact.phone_number.startsWith('+')
         ? update.message.contact.phone_number
         : `+${update.message.contact.phone_number}`;
-      await linkContactAndSendOtp(phone, String(update.message.from.id));
+      await consumeFirstLoginLink(phone, String(update.message.from.id));
       await sendTelegramMessage(
         String(update.message.from.id),
         'Nombor disahkan. Kod OTP sudah dihantar di sini.',

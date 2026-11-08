@@ -33,7 +33,7 @@ export async function createTelegramLink(
   const token = randomBytes(32).toString('base64url');
   const expiresAt = new Date(Date.now() + TOKEN_TTL_MS);
   await prisma.telegramLinkToken.create({
-    data: { tokenHash: hashToken(token), employeeId, expiresAt },
+    data: { tokenHash: hashToken(token), employeeId, phone: '', expiresAt },
   });
 
   return { url: `https://t.me/${username}?start=${token}`, expiresAt: expiresAt.toISOString() };
@@ -42,9 +42,14 @@ export async function createTelegramLink(
 export async function createTelegramLinkForPhone(
   phone: string,
 ): Promise<{ url: string; expiresAt: string }> {
-  const employee = await prisma.employee.findUnique({ where: { phone }, select: { id: true } });
-  if (!employee) throw notFound('Nombor telefon ini belum didaftarkan HR.');
-  return createTelegramLink(employee.id);
+  const { username } = requireTelegramConfig();
+  if (!env.TELEGRAM_BOT_TOKEN) throw new Error('Telegram bot token is not configured');
+  const token = randomBytes(32).toString('base64url');
+  const expiresAt = new Date(Date.now() + TOKEN_TTL_MS);
+  await prisma.telegramLinkToken.create({
+    data: { tokenHash: hashToken(token), phone, expiresAt },
+  });
+  return { url: `https://t.me/${username}?start=${token}`, expiresAt: expiresAt.toISOString() };
 }
 
 export async function linkContactAndSendOtp(phone: string, telegramUserId: string): Promise<void> {
@@ -60,10 +65,35 @@ export async function linkContactAndSendOtp(phone: string, telegramUserId: strin
   await requestOtp(phone);
 }
 
+export async function consumeFirstLoginLink(phone: string, telegramUserId: string): Promise<void> {
+  const row = await prisma.telegramLinkToken.findFirst({
+    where: { phone, usedAt: null, expiresAt: { gt: new Date() } },
+    orderBy: { createdAt: 'desc' },
+  });
+  if (!row) throw conflict('Pautan Telegram sudah tamat. Minta OTP semula.');
+  const employee = await prisma.employee.findUnique({
+    where: { phone },
+    select: { id: true, telegramUserId: true },
+  });
+  if (!employee) throw notFound('Nombor telefon ini belum didaftarkan HR.');
+  if (employee.telegramUserId && employee.telegramUserId !== telegramUserId) {
+    throw conflict('Akaun Telegram untuk nombor ini sudah dipautkan.');
+  }
+  await prisma.$transaction([
+    prisma.employee.update({ where: { id: employee.id }, data: { telegramUserId } }),
+    prisma.telegramLinkToken.update({
+      where: { id: row.id },
+      data: { employeeId: employee.id, usedAt: new Date() },
+    }),
+  ]);
+  await requestOtp(phone);
+}
+
 export async function consumeTelegramLink(token: string, telegramUserId: string): Promise<void> {
   const row = await prisma.telegramLinkToken.findUnique({ where: { tokenHash: hashToken(token) } });
   if (!row || row.usedAt || row.expiresAt <= new Date())
     throw conflict('Pautan Telegram sudah tidak sah.');
+  if (!row.employeeId) throw conflict('Pautan Telegram belum dipadankan dengan employee.');
 
   const existing = await prisma.employee.findFirst({
     where: { telegramUserId, NOT: { id: row.employeeId } },
