@@ -1,0 +1,69 @@
+# Coolify can deploy this file instead of two separate applications.
+#
+# Why it is here: with a Dockerfile build the platform has to inject environment
+# variables into the container, and that step is easy to get wrong (a variable
+# marked build-only never reaches the process). A compose file declares the
+# mapping explicitly, so the deploy either has the variable or fails loudly at
+# parse time.
+#
+# Only four variables are required; the API validates the rest itself.
+# Create a .env next to this file (git-ignored) or set them in Coolify.
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      API_HOST: 0.0.0.0
+      API_PORT: 4000
+      # Required: no default exists, and startup refuses without them.
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL is required}
+      SESSION_SECRET: ${SESSION_SECRET:?SESSION_SECRET is required}
+      FIELD_ENCRYPTION_KEY: ${FIELD_ENCRYPTION_KEY:?FIELD_ENCRYPTION_KEY is required}
+      FIELD_INDEX_KEY: ${FIELD_INDEX_KEY:?FIELD_INDEX_KEY is required}
+      # Optional; the application has sensible defaults.
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
+      UPLOAD_DIR: /data/uploads
+    volumes:
+      - api-uploads:/data
+    ports:
+      - '4000:4000'
+    healthcheck:
+      # node, not curl: the runtime image ships no curl or wget.
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:4000/health/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        # Baked into the bundle; empty means the nginx proxy forwards /api.
+        VITE_API_BASE_URL: ''
+    restart: unless-stopped
+    environment:
+      API_UPSTREAM: http://api:4000
+    ports:
+      - '8080:80'
+    depends_on:
+      api:
+        condition: service_started
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '--spider', 'http://127.0.0.1/']
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+
+volumes:
+  api-uploads:
