@@ -66,8 +66,8 @@ export function LoginPage() {
   }
 
   return (
-    <div className="grid min-h-dvh lg:grid-cols-2">
-      <section className="hidden flex-col justify-between bg-ink p-10 text-white lg:flex">
+    <div className="grid min-h-dvh bg-canvas lg:grid-cols-[minmax(22rem,0.9fr)_minmax(30rem,1.1fr)]">
+      <section className="flex min-h-56 flex-col justify-between bg-ink px-6 py-6 text-white sm:px-10 sm:py-8 lg:min-h-dvh lg:p-10">
         <p className="text-xl font-black tracking-tight">
           <span className="text-accent">MR.</span> ABSORBER
           <span className="mt-1 block text-xs font-medium uppercase tracking-[0.2em] text-white/60">
@@ -75,7 +75,7 @@ export function LoginPage() {
           </span>
         </p>
 
-        <div>
+        <div className="hidden lg:block">
           <h1 className="max-w-md text-4xl font-black leading-tight">
             Pakar Absorber <span className="text-accent">Melaka Anda.</span>
           </h1>
@@ -84,14 +84,17 @@ export function LoginPage() {
           </p>
         </div>
 
-        <p className="text-xs text-white/40">Dua cawangan: Melaka Utama &amp; Ayer Keroh</p>
+        <p className="text-xs text-white/50">Melaka Utama · Ayer Keroh</p>
       </section>
 
-      <section className="flex items-center justify-center px-4 py-12">
-        <div className="w-full max-w-sm">
-          <h2 className="text-2xl font-bold">Selamat Kembali!</h2>
-          <p className="mt-1 text-sm text-ink-muted">
-            Sila log masuk untuk menguruskan tugasan bengkel anda.
+      <section className="flex items-start justify-center px-4 py-10 sm:px-8 sm:py-14 lg:items-center lg:px-12">
+        <div className="w-full max-w-md">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-ink-muted">
+            Log masuk
+          </p>
+          <h2 className="mt-2 text-2xl font-bold">Selamat kembali</h2>
+          <p className="mt-2 max-w-sm text-sm leading-relaxed text-ink-muted">
+            Gunakan nombor telefon anda untuk masuk ke sistem bengkel.
           </p>
 
           {stage === 'phone' ? (
@@ -99,7 +102,7 @@ export function LoginPage() {
               onSubmit={(event) => {
                 void requestCode(event);
               }}
-              className="mt-8 space-y-4"
+              className="mt-8 space-y-5"
               noValidate
             >
               <div>
@@ -118,8 +121,8 @@ export function LoginPage() {
                   onChange={(event) => setPhone(event.target.value)}
                   className={fieldClass}
                 />
-                <p className="mt-1 text-xs text-ink-muted">
-                  Nombor demo:{' '}
+                <p className="mt-2 text-xs text-ink-muted">
+                  Untuk ujian:
                   <button
                     type="button"
                     className="font-medium text-accent underline"
@@ -138,7 +141,7 @@ export function LoginPage() {
               onSubmit={(event) => {
                 void submitCode(event);
               }}
-              className="mt-8 space-y-4"
+              className="mt-8 space-y-5"
               noValidate
             >
               <div>

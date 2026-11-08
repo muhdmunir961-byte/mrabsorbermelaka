@@ -1,4 +1,5 @@
 import type { FastifyPluginAsync } from 'fastify';
+/* eslint-disable @typescript-eslint/require-await */
 import { z } from 'zod';
 import { currentUser } from '../../auth/guard.js';
 import { parseInput } from '../../validate.js';
