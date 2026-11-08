@@ -31,7 +31,8 @@ export function App() {
   if (!user) {
     return (
       <Routes>
-        <Route path="/login" element={<LoginPage />} />
+        <Route path="/login" element={<LoginPage mode="login" />} />
+        <Route path="/register" element={<LoginPage mode="register" />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     );

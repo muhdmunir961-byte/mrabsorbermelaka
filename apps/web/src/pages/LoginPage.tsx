@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { z } from 'zod';
 import { useSession } from '../lib/session';
 import { ApiError, api } from '../lib/api';
@@ -30,7 +31,9 @@ const fieldClass =
 const submitClass =
   'w-full rounded-control bg-accent px-4 py-2.5 text-sm font-bold text-accent-ink disabled:opacity-60';
 
-export function LoginPage() {
+const TELEGRAM_BOT_URL = 'https://t.me/mrabsorbermelaka_bot';
+
+export function LoginPage({ mode = 'login' }: { mode?: 'login' | 'register' }) {
   const { signIn } = useSession();
   const [phone, setPhone] = useState('');
   const [code, setCode] = useState('');
@@ -108,11 +111,15 @@ export function LoginPage() {
       <section className="flex items-start justify-center px-4 py-10 sm:px-8 sm:py-14 lg:items-center lg:px-12">
         <div className="w-full max-w-md">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-ink-muted">
-            Log masuk
+            {mode === 'register' ? 'Daftar Telegram' : 'Log masuk'}
           </p>
-          <h2 className="mt-2 text-2xl font-bold">Selamat kembali</h2>
+          <h2 className="mt-2 text-2xl font-bold">
+            {mode === 'register' ? 'Pautkan akaun Telegram' : 'Selamat kembali'}
+          </h2>
           <p className="mt-2 max-w-sm text-sm leading-relaxed text-ink-muted">
-            Gunakan nombor telefon anda untuk masuk ke sistem bengkel.
+            {mode === 'register'
+              ? 'Masukkan nombor telefon berdaftar, kemudian buka bot untuk pengesahan pertama.'
+              : 'Gunakan nombor telefon anda untuk masuk ke sistem bengkel.'}
           </p>
 
           {stage === 'phone' ? (
@@ -153,6 +160,14 @@ export function LoginPage() {
               <button type="submit" disabled={busy} className={submitClass}>
                 {busy ? 'Menghantar…' : 'Hantar OTP'}
               </button>
+              <a
+                href={TELEGRAM_BOT_URL}
+                target="_blank"
+                rel="noreferrer"
+                className="block w-full rounded-control border border-border-strong px-4 py-2.5 text-center text-sm font-semibold"
+              >
+                Buka bot Telegram
+              </a>
             </form>
           ) : (
             <form
@@ -206,7 +221,23 @@ export function LoginPage() {
           </p>
 
           <p className="mt-8 text-xs text-ink-muted">
-            Bukan staf? <span className="font-medium text-ink">Hubungi HR</span>.
+            {mode === 'register' ? (
+              <>
+                Sudah dipautkan?{' '}
+                <Link to="/login" className="font-medium text-ink underline">
+                  Log masuk
+                </Link>
+                .
+              </>
+            ) : (
+              <>
+                Belum pernah daftar Telegram?{' '}
+                <Link to="/register" className="font-medium text-ink underline">
+                  Daftar di sini
+                </Link>
+                .
+              </>
+            )}
           </p>
         </div>
       </section>
