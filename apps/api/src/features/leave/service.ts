@@ -13,7 +13,7 @@ import type {
 import type { SessionUser } from '../../auth/session.js';
 import { conflict, notFound, validationFailed } from '../../errors.js';
 import { leaveRepository as repo } from './repository.js';
-import { notifyApprovalPersonal, notifyMonitoringGroup } from '../telegram/service.js';
+import { notifyLeaveApprovalPersonal, notifyMonitoringGroup } from '../telegram/service.js';
 import {
   consumesEntitlement,
   countLeaveDays,
@@ -110,7 +110,8 @@ async function submit(employee: Employee, args: SubmitArgs): Promise<LeaveSubmis
 
   const names = overlaps.map((row) => row.employee.fullName);
 
-  void notifyApprovalPersonal(
+  void notifyLeaveApprovalPersonal(
+    created.id,
     `Permohonan ${args.type} baharu\nPekerja: ${employee.fullName}\nTarikh: ${args.startDate} hingga ${args.endDate}\nHari: ${days}\nSebab: ${args.reason}`,
   );
   void notifyMonitoringGroup(

@@ -6,11 +6,19 @@ import {
   createTelegramLink,
   consumeTelegramLink,
   sendTelegramMessage,
+  decideTelegramLeave,
   telegramWebhookSecret,
 } from './service.js';
 
 const TelegramUpdate = z
   .object({
+    callback_query: z
+      .object({
+        id: z.string(),
+        data: z.string().optional(),
+        from: z.object({ id: z.union([z.number(), z.string()]) }),
+      })
+      .optional(),
     message: z
       .object({
         from: z.object({ id: z.union([z.number(), z.string()]) }),
@@ -31,6 +39,17 @@ export const telegramRoutes: FastifyPluginAsync = async (app) => {
       return reply.code(401).send({ status: 'ignored' });
     }
     const update = parseInput(TelegramUpdate, request.body);
+    if (update.callback_query?.data?.startsWith('leave:')) {
+      const [, rawDecision, requestId] = update.callback_query.data.split(':');
+      if ((rawDecision !== 'APPROVE' && rawDecision !== 'REJECT') || !requestId)
+        return { status: 'ignored' };
+      await decideTelegramLeave(String(update.callback_query.from.id), requestId, rawDecision);
+      await sendTelegramMessage(
+        String(update.callback_query.from.id),
+        `Permohonan telah ${rawDecision === 'APPROVE' ? 'diluluskan' : 'ditolak'}.`,
+      );
+      return { status: 'decided' };
+    }
     const text = update.message?.text ?? '';
     if (text === '/start') {
       await sendTelegramMessage(

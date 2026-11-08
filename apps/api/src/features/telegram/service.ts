@@ -59,14 +59,22 @@ export function telegramWebhookSecret(): string {
   return requireTelegramConfig().secret;
 }
 
-export async function sendTelegramMessage(chatId: string, text: string): Promise<void> {
+export async function sendTelegramMessage(
+  chatId: string,
+  text: string,
+  replyMarkup?: unknown,
+): Promise<void> {
   if (!env.TELEGRAM_BOT_TOKEN) throw new Error('Telegram bot token is not configured');
   const response = await fetch(
     `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`,
     {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ chat_id: chatId, text }),
+      body: JSON.stringify({
+        chat_id: chatId,
+        text,
+        ...(replyMarkup ? { reply_markup: replyMarkup } : {}),
+      }),
     },
   );
   if (!response.ok) throw new Error(`Telegram sendMessage failed with ${response.status}`);
@@ -88,6 +96,44 @@ export async function notifyApprovalPersonal(text: string): Promise<void> {
     approvers.flatMap((row) =>
       row.telegramUserId ? [sendTelegramMessage(row.telegramUserId, text)] : [],
     ),
+  );
+}
+
+export async function notifyLeaveApprovalPersonal(requestId: string, text: string): Promise<void> {
+  const approvers = await prisma.employee.findMany({
+    where: { role: { in: ['ADMIN_HR', 'OWNER'] }, status: 'ACTIVE', telegramUserId: { not: null } },
+    select: { telegramUserId: true },
+  });
+  const replyMarkup = {
+    inline_keyboard: [
+      [
+        { text: 'Lulus', callback_data: `leave:APPROVE:${requestId}` },
+        { text: 'Tolak', callback_data: `leave:REJECT:${requestId}` },
+      ],
+    ],
+  };
+  await Promise.allSettled(
+    approvers.flatMap((row) =>
+      row.telegramUserId ? [sendTelegramMessage(row.telegramUserId, text, replyMarkup)] : [],
+    ),
+  );
+}
+
+export async function decideTelegramLeave(
+  telegramUserId: string,
+  requestId: string,
+  decision: 'APPROVE' | 'REJECT',
+) {
+  const approver = await prisma.employee.findFirst({
+    where: { telegramUserId, status: 'ACTIVE', role: { in: ['ADMIN_HR', 'OWNER'] } },
+    select: { id: true, role: true, fullName: true },
+  });
+  if (!approver) throw conflict('Telegram anda bukan approver yang sah.');
+  const { decideRequest } = await import('../leave/service.js');
+  return decideRequest(
+    { employeeId: approver.id, role: approver.role, fullName: approver.fullName, expiresAt: 0 },
+    requestId,
+    { decision },
   );
 }
 
