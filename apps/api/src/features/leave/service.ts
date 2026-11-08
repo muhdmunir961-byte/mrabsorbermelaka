@@ -13,6 +13,7 @@ import type {
 import type { SessionUser } from '../../auth/session.js';
 import { conflict, notFound, validationFailed } from '../../errors.js';
 import { leaveRepository as repo } from './repository.js';
+import { notifyApprovalPersonal, notifyMonitoringGroup } from '../telegram/service.js';
 import {
   consumesEntitlement,
   countLeaveDays,
@@ -108,6 +109,13 @@ async function submit(employee: Employee, args: SubmitArgs): Promise<LeaveSubmis
   );
 
   const names = overlaps.map((row) => row.employee.fullName);
+
+  void notifyApprovalPersonal(
+    `Permohonan ${args.type} baharu\nPekerja: ${employee.fullName}\nTarikh: ${args.startDate} hingga ${args.endDate}\nHari: ${days}\nSebab: ${args.reason}`,
+  );
+  void notifyMonitoringGroup(
+    `Permohonan ${args.type} baharu\nPekerja: ${employee.fullName}\nTarikh: ${args.startDate} hingga ${args.endDate}\nHari: ${days}`,
+  );
 
   return {
     request: toLeaveRequest(created),
@@ -208,6 +216,9 @@ async function decideOne(
   });
 
   if (!updated) throw conflict('That request was already decided by someone else');
+  void notifyMonitoringGroup(
+    `Permohonan ${request.type} ${input.decision === 'APPROVE' ? 'diluluskan' : 'ditolak'}\nPekerja: ${request.employee.fullName}\nOleh: ${approver.fullName}`,
+  );
   return toLeaveRequest(updated);
 }
 

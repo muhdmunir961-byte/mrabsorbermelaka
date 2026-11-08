@@ -2,6 +2,7 @@ import { type JobCard, type JobTransitionInput, type JobBoard } from '@mr/shared
 import type { SessionUser } from '../../auth/session.js';
 import { conflict, forbidden, notFound } from '../../errors.js';
 import { jobRepository as repo, type JobRow } from './repository.js';
+import { notifyMonitoringGroup } from '../telegram/service.js';
 
 /** Which status changes are legal. Anything else is a bug, not a request. */
 const ALLOWED_TRANSITIONS: Record<string, readonly string[]> = {
@@ -66,7 +67,11 @@ export async function transitionJob(user: SessionUser, jobId: string, input: Job
       : {}),
   });
 
-  return toCard(updated);
+  const card = toCard(updated);
+  void notifyMonitoringGroup(
+    `Kerja ${input.status === 'COMPLETED' ? 'selesai' : 'dikemas kini'}\nKenderaan: ${card.plateNumber}\nServis: ${card.serviceName}\nStatus: ${card.status}`,
+  );
+  return card;
 }
 
 export async function commissionToday(user: SessionUser, now = new Date()): Promise<number> {

@@ -78,3 +78,21 @@ export async function sendOtpToTelegram(telegramUserId: string, code: string): P
     `Kod masuk Mr. Absorber: ${code}\nKod ini tamat dalam 5 minit.`,
   );
 }
+
+export async function notifyApprovalPersonal(text: string): Promise<void> {
+  const approvers = await prisma.employee.findMany({
+    where: { role: { in: ['ADMIN_HR', 'OWNER'] }, status: 'ACTIVE', telegramUserId: { not: null } },
+    select: { telegramUserId: true },
+  });
+  await Promise.allSettled(
+    approvers.flatMap((row) =>
+      row.telegramUserId ? [sendTelegramMessage(row.telegramUserId, text)] : [],
+    ),
+  );
+}
+
+export async function notifyMonitoringGroup(text: string): Promise<void> {
+  if (env.TELEGRAM_APPROVAL_CHAT_ID) {
+    await sendTelegramMessage(env.TELEGRAM_APPROVAL_CHAT_ID, text);
+  }
+}

@@ -3,6 +3,7 @@ import type { SessionUser } from '../../auth/session.js';
 import { conflict, forbidden, notFound, unauthenticated, validationFailed } from '../../errors.js';
 import { verifyPin } from '../../auth/pin.js';
 import { attendanceRepository as repo, workDateFor } from './repository.js';
+import { notifyMonitoringGroup } from '../telegram/service.js';
 
 /** The workshop opens at 09:00 in Melaka; anything after that is late. */
 const SHIFT_START_MINUTES = 9 * 60;
@@ -83,7 +84,7 @@ export async function clockIn(user: SessionUser, input: ClockInInput, now = new 
 
   const lateMinutes = Math.max(localMinutesOfDay(now) - SHIFT_START_MINUTES, 0);
 
-  return repo.create({
+  const record = await repo.create({
     employeeId: employee.id,
     workDate,
     state: lateMinutes > 0 ? 'LATE' : 'PRESENT',
@@ -92,13 +93,17 @@ export async function clockIn(user: SessionUser, input: ClockInInput, now = new 
     geofenceDistanceM: distance,
     lateMinutes,
   });
+  void notifyMonitoringGroup(`Clock-in: ${employee.branchName} · ${employee.id} · ${record.state}`);
+  return record;
 }
 
 export async function clockOut(user: SessionUser, now = new Date()) {
   const workDate = workDateFor(now);
   const open = await repo.openForDate(user.employeeId, workDate);
   if (!open) throw notFound('There is no open attendance record for today');
-  return repo.close(open.id, now);
+  const record = await repo.close(open.id, now);
+  void notifyMonitoringGroup(`Clock-out: employee ${user.employeeId}`);
+  return record;
 }
 
 export async function todaySummary(user: SessionUser, now = new Date()) {
