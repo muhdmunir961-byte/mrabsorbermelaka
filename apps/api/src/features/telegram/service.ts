@@ -70,7 +70,6 @@ export async function consumeFirstLoginLink(phone: string, telegramUserId: strin
     where: { phone, usedAt: null, expiresAt: { gt: new Date() } },
     orderBy: { createdAt: 'desc' },
   });
-  if (!row) throw conflict('Pautan Telegram sudah tamat. Minta OTP semula.');
   const employee = await prisma.employee.findUnique({
     where: { phone },
     select: { id: true, telegramUserId: true },
@@ -78,6 +77,11 @@ export async function consumeFirstLoginLink(phone: string, telegramUserId: strin
   if (!employee) throw notFound('Nombor telefon ini belum didaftarkan HR.');
   if (employee.telegramUserId && employee.telegramUserId !== telegramUserId) {
     throw conflict('Akaun Telegram untuk nombor ini sudah dipautkan.');
+  }
+  if (!row) {
+    await prisma.employee.update({ where: { id: employee.id }, data: { telegramUserId } });
+    await requestOtp(phone);
+    return;
   }
   await prisma.$transaction([
     prisma.employee.update({ where: { id: employee.id }, data: { telegramUserId } }),
