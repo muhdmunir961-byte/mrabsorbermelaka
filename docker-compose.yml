@@ -32,8 +32,8 @@ services:
       UPLOAD_DIR: /data/uploads
     volumes:
       - api-uploads:/data
-    ports:
-      - '4000:4000'
+    expose:
+      - '4000'
     healthcheck:
       # node, not curl: the runtime image ships no curl or wget.
       test:
@@ -56,8 +56,8 @@ services:
     restart: unless-stopped
     environment:
       API_UPSTREAM: http://api:4000
-    ports:
-      - '8080:80'
+    expose:
+      - '80'
     depends_on:
       api:
         condition: service_started
