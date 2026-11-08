@@ -46,22 +46,9 @@ ENV NODE_ENV=production
 ENV API_HOST=0.0.0.0
 ENV API_PORT=4000
 
-# A headless Chromium binary is a hard runtime dependency of the face matcher,
-# not an optional extra: without it /face/* fails while everything else works.
-# The headless-shell package avoids installing Chromium's full browser UI and
-# keeps the runtime image materially smaller for constrained deployment hosts.
-RUN apt-get update \
- && apt-get install -y --no-install-recommends \
-      chromium-headless-shell \
-      ca-certificates \
-      fonts-dejavu-core \
-      fonts-liberation \
- && rm -rf /var/lib/apt/lists/*
-
-# The matcher launches Chromium through Playwright, which needs to find this
-# binary rather than downloading its own.
-ENV PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium-headless-shell
-ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+# Chromium is intentionally not installed in this constrained runtime image.
+# Face matching remains lazy and unavailable until a browser is provisioned;
+# the API and Telegram webhook do not depend on it at startup.
 
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/package.json ./
