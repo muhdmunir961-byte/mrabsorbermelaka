@@ -1,6 +1,7 @@
 import type { FastifyPluginAsync } from 'fastify';
 /* eslint-disable @typescript-eslint/require-await */
 import { z } from 'zod';
+import { normalizeMalaysianPhone } from '@mr/shared';
 import { currentUser } from '../../auth/guard.js';
 import { parseInput } from '../../validate.js';
 import {
@@ -62,9 +63,7 @@ export const telegramRoutes: FastifyPluginAsync = async (app) => {
     }
     const text = update.message?.text ?? '';
     if (update.message?.contact) {
-      const phone = update.message.contact.phone_number.startsWith('+')
-        ? update.message.contact.phone_number
-        : `+${update.message.contact.phone_number}`;
+      const phone = normalizeMalaysianPhone(update.message.contact.phone_number);
       await consumeFirstLoginLink(phone, String(update.message.from.id));
       await sendTelegramMessage(
         String(update.message.from.id),
