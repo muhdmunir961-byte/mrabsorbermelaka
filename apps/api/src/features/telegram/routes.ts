@@ -13,6 +13,7 @@ import {
 
 const TelegramUpdate = z
   .object({
+    update_id: z.number().optional(),
     callback_query: z
       .object({
         id: z.string(),
@@ -27,7 +28,7 @@ const TelegramUpdate = z
       })
       .optional(),
   })
-  .strict();
+  .passthrough();
 
 export const telegramRoutes: FastifyPluginAsync = async (app) => {
   app.post('/link', async (request) => {
