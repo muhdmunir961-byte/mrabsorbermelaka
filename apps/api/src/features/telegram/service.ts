@@ -2,6 +2,7 @@ import { createHash, randomBytes } from 'node:crypto';
 import { prisma } from '../../db.js';
 import { env } from '../../env.js';
 import { conflict, notFound } from '../../errors.js';
+import { requestOtp } from '../auth/service.js';
 
 const TOKEN_TTL_MS = 10 * 60 * 1000;
 
@@ -36,6 +37,27 @@ export async function createTelegramLink(
   });
 
   return { url: `https://t.me/${username}?start=${token}`, expiresAt: expiresAt.toISOString() };
+}
+
+export async function createTelegramLinkForPhone(
+  phone: string,
+): Promise<{ url: string; expiresAt: string }> {
+  const employee = await prisma.employee.findUnique({ where: { phone }, select: { id: true } });
+  if (!employee) throw notFound('Nombor telefon ini belum didaftarkan HR.');
+  return createTelegramLink(employee.id);
+}
+
+export async function linkContactAndSendOtp(phone: string, telegramUserId: string): Promise<void> {
+  const employee = await prisma.employee.findUnique({
+    where: { phone },
+    select: { id: true, telegramUserId: true },
+  });
+  if (!employee) throw notFound('Nombor telefon ini belum didaftarkan HR.');
+  if (employee.telegramUserId && employee.telegramUserId !== telegramUserId) {
+    throw conflict('Akaun Telegram untuk nombor ini sudah dipautkan.');
+  }
+  await prisma.employee.update({ where: { id: employee.id }, data: { telegramUserId } });
+  await requestOtp(phone);
 }
 
 export async function consumeTelegramLink(token: string, telegramUserId: string): Promise<void> {

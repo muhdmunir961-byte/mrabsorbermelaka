@@ -2,10 +2,19 @@ import { z } from 'zod';
 import { BranchCode, EmploymentStatus, LeaveType, RequestStatus, Role } from './enums.js';
 import { Sen } from './money.js';
 
-/** Malaysian mobile in E.164 form, e.g. +60123456789. */
+/** Normalises Malaysian mobile input to one database/login representation. */
+export function normalizeMalaysianPhone(value: string): string {
+  const compact = value.replace(/[\s()-]/g, '');
+  if (/^01\d{8,9}$/.test(compact)) return `+6${compact}`;
+  if (/^601\d{8,9}$/.test(compact)) return `+${compact}`;
+  return compact;
+}
+
+/** Accepts local Malaysian input and returns E.164. */
 export const MalaysianPhone = z
   .string()
-  .regex(/^\+60[0-9]{8,10}$/, 'Use a Malaysian number in E.164 form, e.g. +60123456789');
+  .transform(normalizeMalaysianPhone)
+  .pipe(z.string().regex(/^\+60[0-9]{8,10}$/, 'Masukkan nombor telefon Malaysia yang sah'));
 
 export const EmployeeSummary = z.object({
   id: z.uuid(),

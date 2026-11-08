@@ -5,7 +5,9 @@ import { currentUser } from '../../auth/guard.js';
 import { parseInput } from '../../validate.js';
 import {
   createTelegramLink,
+  createTelegramLinkForPhone,
   consumeTelegramLink,
+  linkContactAndSendOtp,
   sendTelegramMessage,
   decideTelegramLeave,
   telegramWebhookSecret,
@@ -24,6 +26,7 @@ const TelegramUpdate = z
     message: z
       .object({
         from: z.object({ id: z.union([z.number(), z.string()]) }),
+        contact: z.object({ phone_number: z.string() }).optional(),
         text: z.string().optional(),
       })
       .optional(),
@@ -34,6 +37,11 @@ export const telegramRoutes: FastifyPluginAsync = async (app) => {
   app.post('/link', async (request) => {
     const user = currentUser(request);
     return createTelegramLink(user.employeeId);
+  });
+
+  app.post('/link-by-phone', async (request) => {
+    const body = z.object({ phone: z.string() }).strict().parse(request.body);
+    return createTelegramLinkForPhone(body.phone);
   });
 
   app.post('/webhook', async (request, reply) => {
@@ -53,10 +61,26 @@ export const telegramRoutes: FastifyPluginAsync = async (app) => {
       return { status: 'decided' };
     }
     const text = update.message?.text ?? '';
+    if (update.message?.contact) {
+      const phone = update.message.contact.phone_number.startsWith('+')
+        ? update.message.contact.phone_number
+        : `+${update.message.contact.phone_number}`;
+      await linkContactAndSendOtp(phone, String(update.message.from.id));
+      await sendTelegramMessage(
+        String(update.message.from.id),
+        'Nombor disahkan. Kod OTP sudah dihantar di sini.',
+      );
+      return { status: 'contact_linked' };
+    }
     if (text === '/start') {
       await sendTelegramMessage(
         String(update.message?.from.id),
-        'Buka pautan Sahkan Telegram dari profil anda untuk memautkan akaun.',
+        'Tekan butang Kongsi nombor telefon supaya kami boleh sahkan akaun anda.',
+        {
+          keyboard: [[{ text: 'Kongsi nombor telefon', request_contact: true }]],
+          one_time_keyboard: true,
+          resize_keyboard: true,
+        },
       );
       return { status: 'help' };
     }

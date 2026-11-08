@@ -6,7 +6,9 @@ import { ApiError, api } from '../lib/api';
 const OtpIssuedSchema = z.object({
   challengeExpiresAt: z.string(),
   devCode: z.string().optional(),
+  needsTelegramLink: z.boolean().optional(),
 });
+const TelegramLinkSchema = z.object({ url: z.url(), expiresAt: z.string() });
 
 const SignedInSchema = z.object({
   employeeId: z.uuid(),
@@ -15,6 +17,13 @@ const SignedInSchema = z.object({
 });
 
 const DEMO_PHONE = '+60123456789';
+
+function normalizePhone(value: string): string {
+  const compact = value.replace(/[\s()-]/g, '');
+  if (/^01\d{8,9}$/.test(compact)) return `+6${compact}`;
+  if (/^601\d{8,9}$/.test(compact)) return `+${compact}`;
+  return compact;
+}
 
 const fieldClass =
   'mt-1 w-full rounded-control border border-border-strong bg-surface px-3 py-2.5 text-sm';
@@ -35,11 +44,20 @@ export function LoginPage() {
     setError(null);
     setBusy(true);
     try {
+      const normalizedPhone = normalizePhone(phone);
       const issued = await api('/auth/otp/request', OtpIssuedSchema, {
         method: 'POST',
-        body: JSON.stringify({ phone }),
+        body: JSON.stringify({ phone: normalizedPhone }),
       });
+      setPhone(normalizedPhone);
       setDevCode(issued.devCode ?? null);
+      if (issued.needsTelegramLink) {
+        const link = await api('/telegram/link-by-phone', TelegramLinkSchema, {
+          method: 'POST',
+          body: JSON.stringify({ phone: normalizedPhone }),
+        });
+        window.open(link.url, '_blank', 'noopener,noreferrer');
+      }
       setStage('code');
     } catch (caught) {
       setError(caught instanceof ApiError ? caught.message : 'Rangkaian tidak dapat dihubungi.');

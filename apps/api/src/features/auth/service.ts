@@ -22,6 +22,7 @@ const challenges = new Map<string, Challenge>();
 
 export interface OtpIssued {
   challengeExpiresAt: string;
+  needsTelegramLink?: boolean;
   /** Only present outside production, so the flow is testable without an SMS provider. */
   devCode?: string;
 }
@@ -48,7 +49,10 @@ export async function requestOtp(phone: string): Promise<OtpIssued> {
     await sendOtpToTelegram(employee.telegramUserId, code);
   }
 
-  const issued: OtpIssued = { challengeExpiresAt: new Date(expiresAt).toISOString() };
+  const issued: OtpIssued = {
+    challengeExpiresAt: new Date(expiresAt).toISOString(),
+    ...(employee?.telegramUserId ? {} : { needsTelegramLink: true }),
+  };
   if (exposeDevCode) {
     issued.devCode = code;
   }
