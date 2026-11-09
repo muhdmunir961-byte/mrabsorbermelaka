@@ -62,7 +62,17 @@ export async function buildApp(): Promise<FastifyInstance> {
   });
   await app.register(cors, { origin: allowedOrigins, credentials: true });
   await app.register(cookie, { secret: env.SESSION_SECRET });
-  await app.register(rateLimit, { max: 120, timeWindow: '1 minute' });
+  await app.register(rateLimit, {
+    max: 120,
+    timeWindow: '1 minute',
+    // Cloudflare does not send X-Forwarded-For to the origin, so req.ip is the
+    // edge address and changes between requests — every request landed in its own
+    // bucket and the limit never applied. CF-Connecting-IP is the real client.
+    keyGenerator: (request) => {
+      const clientIp = request.headers['cf-connecting-ip'];
+      return typeof clientIp === 'string' && clientIp !== '' ? clientIp : request.ip;
+    },
+  });
 
   // Documents arrive as a raw buffer, so only this route needs a larger limit and
   // a buffer parser. Everything else stays JSON at 256 KB.
