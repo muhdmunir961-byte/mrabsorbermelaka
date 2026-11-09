@@ -10,7 +10,10 @@ import { readFileSync, existsSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 
 const PROJECT = process.env.CF_PAGES_PROJECT ?? 'mrabsorbermelaka';
-const API_BASE = process.env.VITE_API_BASE_URL ?? 'https://api.mrabsorbermelaka.biz.id';
+// Empty on purpose: _worker.js proxies /api/* from this origin to the API, which
+// keeps the session cookie first-party. A cross-site API base makes the cookie
+// third-party and browsers drop it after sign-in.
+const API_BASE = process.env.VITE_API_BASE_URL ?? '';
 
 const readSecret = (file) => {
   if (!existsSync(file)) return '';

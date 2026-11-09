@@ -38,7 +38,7 @@ export default tseslint.config(
   {
     // A command-line reporter's output *is* its result, so console.log is the
     // intended interface here rather than a leftover debug statement.
-    files: ['scripts/**/*.mjs'],
+    files: ['scripts/**/*.mjs', 'apps/api/prisma/register-employee.ts'],
     rules: {
       'no-console': 'off',
     },

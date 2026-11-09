@@ -36,6 +36,11 @@ export async function buildApp(): Promise<FastifyInstance> {
   const app = Fastify({
     genReqId: () => randomUUID(),
     logger: { level: env.NODE_ENV === 'development' ? 'info' : 'warn' },
+    // The API always sits behind a proxy (Coolify's router, Cloudflare, or the
+    // Pages worker). Without this, request.ip is the proxy's address and every
+    // user shares one rate-limit bucket, so one person's OTP requests would lock
+    // out everyone else.
+    trustProxy: true,
     // Cookies and auth headers are the only trust inputs; keep the body limit small.
     bodyLimit: 256 * 1024,
   });

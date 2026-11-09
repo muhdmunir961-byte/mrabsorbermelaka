@@ -66,10 +66,11 @@ export function decodeSession(token: string | undefined): SessionUser | null {
 
 export const sessionCookieOptions = {
   httpOnly: true,
-  // In production the web app may live on a different origin than the API, and a
-  // cross-site cookie must be SameSite=None *and* Secure. When both are served
-  // from one origin this stays 'lax', which is stricter.
-  sameSite: env.NODE_ENV === 'production' ? ('none' as const) : ('lax' as const),
+  // The web app reaches the API through its own origin (nginx in the container,
+  // a Pages worker on Cloudflare), so the cookie is always first-party and 'lax'
+  // is enough. It is also the stricter choice: 'none' would send this cookie on
+  // cross-site requests, which nothing here needs.
+  sameSite: 'lax' as const,
   secure: env.NODE_ENV === 'production',
   path: '/',
   maxAge: MAX_AGE_SECONDS,
