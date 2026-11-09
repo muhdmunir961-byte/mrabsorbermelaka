@@ -11,6 +11,7 @@ const OtpIssuedSchema = z.object({
   telegramDelivery: z.enum(['sent', 'failed', 'not_linked']).optional(),
 });
 const TelegramLinkSchema = z.object({ url: z.url(), expiresAt: z.string() });
+const PinStateSchema = z.object({ hasPin: z.boolean() });
 const TELEGRAM_BOT_URL = 'https://t.me/mrabsorbermelaka_bot';
 
 const SignedInSchema = z.object({
@@ -37,9 +38,12 @@ export function LoginPage({ mode = 'login' }: { mode?: 'login' | 'register' }) {
   const { signIn } = useSession();
   const [phone, setPhone] = useState('');
   const [code, setCode] = useState('');
-  const [stage, setStage] = useState<'phone' | 'code'>('phone');
+  const [stage, setStage] = useState<'phone' | 'code' | 'pin'>('phone');
   const [devCode, setDevCode] = useState<string | null>(null);
   const [awaitingApproval, setAwaitingApproval] = useState(false);
+  const [pin, setPin] = useState('');
+  const [pinConfirm, setPinConfirm] = useState('');
+  const [pendingUser, setPendingUser] = useState<z.infer<typeof SignedInSchema> | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -98,7 +102,38 @@ export function LoginPage({ mode = 'login' }: { mode?: 'login' | 'register' }) {
         method: 'POST',
         body: JSON.stringify({ phone, code }),
       });
-      signIn(user);
+
+      // Attendance needs a PIN and face verification is not available, so an
+      // account without one cannot clock in. Ask for it now, while the person is
+      // already proving who they are.
+      const { hasPin } = await api('/auth/pin', PinStateSchema);
+      if (hasPin) {
+        signIn(user);
+        return;
+      }
+      setPendingUser(user);
+      setStage('pin');
+    } catch (caught) {
+      setError(caught instanceof ApiError ? caught.message : 'Rangkaian tidak dapat dihubungi.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function submitPin(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError(null);
+    if (pin !== pinConfirm) {
+      setError('PIN dan ulangannya tidak sama.');
+      return;
+    }
+    setBusy(true);
+    try {
+      await api('/auth/pin', z.undefined(), {
+        method: 'POST',
+        body: JSON.stringify({ pin }),
+      });
+      if (pendingUser) signIn(pendingUser);
     } catch (caught) {
       setError(caught instanceof ApiError ? caught.message : 'Rangkaian tidak dapat dihubungi.');
     } finally {
@@ -188,6 +223,61 @@ export function LoginPage({ mode = 'login' }: { mode?: 'login' | 'register' }) {
               >
                 Buka bot Telegram
               </a>
+            </form>
+          ) : stage === 'pin' ? (
+            <form
+              onSubmit={(event) => {
+                void submitPin(event);
+              }}
+              className="mt-8 space-y-5"
+              noValidate
+            >
+              <p className="rounded-control border border-border-strong bg-surface px-3 py-3 text-sm leading-relaxed">
+                Akaun anda belum ada PIN. PIN 6 digit ini digunakan untuk merekod kehadiran
+                (clock-in / clock-out), jadi tetapkan sekarang.
+              </p>
+              <div>
+                <label htmlFor="pin" className="block text-sm font-medium">
+                  PIN baharu (6 digit)
+                </label>
+                <input
+                  id="pin"
+                  name="pin"
+                  type="password"
+                  inputMode="numeric"
+                  autoComplete="new-password"
+                  pattern="[0-9]{6}"
+                  maxLength={6}
+                  required
+                  value={pin}
+                  onChange={(event) => setPin(event.target.value)}
+                  className={`${fieldClass} tabular text-center text-lg tracking-[0.4em]`}
+                />
+              </div>
+              <div>
+                <label htmlFor="pin-confirm" className="block text-sm font-medium">
+                  Ulang PIN
+                </label>
+                <input
+                  id="pin-confirm"
+                  name="pin-confirm"
+                  type="password"
+                  inputMode="numeric"
+                  autoComplete="new-password"
+                  pattern="[0-9]{6}"
+                  maxLength={6}
+                  required
+                  value={pinConfirm}
+                  onChange={(event) => setPinConfirm(event.target.value)}
+                  className={`${fieldClass} tabular text-center text-lg tracking-[0.4em]`}
+                />
+                <p className="mt-2 text-xs text-ink-muted">
+                  Elakkan PIN mudah seperti 123456 atau 111111.
+                </p>
+              </div>
+              <button type="submit" disabled={busy} className={submitClass}>
+                {busy ? 'Menyimpan…' : 'Simpan PIN & Masuk'}
+              </button>
             </form>
           ) : (
             <form

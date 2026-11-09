@@ -1,7 +1,9 @@
 import { randomInt, timingSafeEqual } from 'node:crypto';
+import type { PinSetupInput } from '@mr/shared';
 import { prisma } from '../../db.js';
 import { env } from '../../env.js';
-import { unauthenticated } from '../../errors.js';
+import { notFound, unauthenticated } from '../../errors.js';
+import { hashPin, verifyPin } from '../../auth/pin.js';
 import type { SessionUser } from '../../auth/session.js';
 import { sendOtpToTelegram } from '../telegram/service.js';
 
@@ -116,4 +118,39 @@ export async function verifyOtp(phone: string, code: string): Promise<SessionUse
     fullName: employee.fullName,
     expiresAt: Math.floor(Date.now() / 1000) + 12 * 60 * 60,
   };
+}
+
+/**
+ * Whether the signed-in employee has registered the PIN used to clock in. The
+ * login screen asks for one when this is false, so a new account can record
+ * attendance straight away.
+ */
+export async function pinState(user: SessionUser): Promise<{ hasPin: boolean }> {
+  const row = await prisma.employee.findUnique({
+    where: { id: user.employeeId },
+    select: { pinHash: true },
+  });
+  if (!row) throw notFound('Akaun ini tidak dijumpai');
+  return { hasPin: row.pinHash !== null };
+}
+
+/**
+ * Registers or replaces the clock-in PIN. Replacing requires the current PIN, so
+ * someone who finds an unlocked session cannot silently take the account over.
+ */
+export async function setClockPin(user: SessionUser, input: PinSetupInput): Promise<void> {
+  const row = await prisma.employee.findUnique({
+    where: { id: user.employeeId },
+    select: { pinHash: true },
+  });
+  if (!row) throw notFound('Akaun ini tidak dijumpai');
+
+  if (row.pinHash !== null && !verifyPin(input.currentPin ?? '', row.pinHash)) {
+    throw unauthenticated('PIN semasa tidak sah');
+  }
+
+  await prisma.employee.update({
+    where: { id: user.employeeId },
+    data: { pinHash: hashPin(input.pin) },
+  });
 }
