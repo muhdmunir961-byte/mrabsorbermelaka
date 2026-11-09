@@ -1,0 +1,18 @@
+# Cloudflare Pages headers. Mirrors the security headers in nginx.conf.template so
+# the Cloudflare deployment is not weaker than the container one.
+#
+# connect-src names the API origin explicitly: on Cloudflare the bundle is served
+# from a different origin than the API, and `default-src 'self'` alone would block
+# every fetch to it.
+
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  X-Frame-Options: DENY
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' https://api.mrabsorbermelaka.biz.id; font-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'
+  Cache-Control: no-store
+
+# Hashed assets are immutable; index.html must never be cached or a deploy would
+# keep serving the old bundle.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable

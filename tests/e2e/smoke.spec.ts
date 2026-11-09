@@ -51,7 +51,7 @@ test.describe('anonymous visitor', () => {
 
   test('signs in with a phone number and a one-time code', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByRole('heading', { name: 'Selamat Kembali!' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Selamat kembali', exact: true })).toBeVisible();
 
     await page.getByRole('button', { name: DEMO_PHONE }).click();
     await page.getByRole('button', { name: 'Hantar OTP' }).click();
@@ -70,7 +70,7 @@ test.describe('anonymous visitor', () => {
   test('is sent to the login screen from a protected route', async ({ page }) => {
     await page.goto('/operations');
 
-    await expect(page.getByRole('heading', { name: 'Selamat Kembali!' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Selamat kembali', exact: true })).toBeVisible();
     await expect(page.getByLabel('Nombor Telefon')).toBeVisible();
   });
 

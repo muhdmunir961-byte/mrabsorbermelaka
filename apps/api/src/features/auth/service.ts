@@ -23,6 +23,12 @@ const challenges = new Map<string, Challenge>();
 export interface OtpIssued {
   challengeExpiresAt: string;
   needsTelegramLink?: boolean;
+  /**
+   * Whether the code actually reached the linked Telegram chat. A delivery
+   * failure is reported rather than thrown: the challenge is already live, and a
+   * 500 would leave the caller unable to say what to do next.
+   */
+  telegramDelivery: 'sent' | 'failed' | 'not_linked';
   /** Only present outside production, so the flow is testable without an SMS provider. */
   devCode?: string;
 }
@@ -45,12 +51,21 @@ export async function requestOtp(phone: string): Promise<OtpIssued> {
     .findUnique({ where: { phone }, select: { id: true, telegramUserId: true } })
     .catch(() => null);
 
+  let telegramDelivery: OtpIssued['telegramDelivery'] = 'not_linked';
   if (employee?.telegramUserId) {
-    await sendOtpToTelegram(employee.telegramUserId, code);
+    try {
+      await sendOtpToTelegram(employee.telegramUserId, code);
+      telegramDelivery = 'sent';
+    } catch {
+      // A blocked bot or a dead chat id must not turn sign-in into a 500: the
+      // code exists, and the caller needs the response to explain what happened.
+      telegramDelivery = 'failed';
+    }
   }
 
   const issued: OtpIssued = {
     challengeExpiresAt: new Date(expiresAt).toISOString(),
+    telegramDelivery,
     ...(!employee?.telegramUserId ? { needsTelegramLink: true } : {}),
   };
   if (exposeDevCode) {

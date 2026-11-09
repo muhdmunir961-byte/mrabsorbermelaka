@@ -8,6 +8,7 @@ const OtpIssuedSchema = z.object({
   challengeExpiresAt: z.string(),
   devCode: z.string().optional(),
   needsTelegramLink: z.boolean().optional(),
+  telegramDelivery: z.enum(['sent', 'failed', 'not_linked']).optional(),
 });
 const TelegramLinkSchema = z.object({ url: z.url(), expiresAt: z.string() });
 const TELEGRAM_BOT_URL = 'https://t.me/mrabsorbermelaka_bot';
@@ -38,6 +39,7 @@ export function LoginPage({ mode = 'login' }: { mode?: 'login' | 'register' }) {
   const [code, setCode] = useState('');
   const [stage, setStage] = useState<'phone' | 'code'>('phone');
   const [devCode, setDevCode] = useState<string | null>(null);
+  const [awaitingApproval, setAwaitingApproval] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -53,13 +55,31 @@ export function LoginPage({ mode = 'login' }: { mode?: 'login' | 'register' }) {
       });
       setPhone(normalizedPhone);
       setDevCode(issued.devCode ?? null);
+      if (issued.telegramDelivery === 'failed') {
+        // The code exists but never reached the chat, so say so instead of
+        // showing a code screen that will never be filled in.
+        setError(
+          'Kod OTP tidak dapat dihantar ke Telegram. Buka bot dan tekan butang Kongsi nombor telefon, atau hubungi HR.',
+        );
+      }
       if (issued.needsTelegramLink) {
-        const link = await api('/telegram/link-by-phone', TelegramLinkSchema, {
-          method: 'POST',
-          body: JSON.stringify({ phone: normalizedPhone }),
-        });
-        void link;
-        window.open(TELEGRAM_BOT_URL, '_blank', 'noopener,noreferrer');
+        // Not linked yet: the bot is where the number gets proven, and an HR admin
+        // has to approve it before a code is sent. Opening the bot is the point of
+        // this step, so it happens whether or not the deep link is available.
+        setAwaitingApproval(true);
+        try {
+          const link = await api('/telegram/link-by-phone', TelegramLinkSchema, {
+            method: 'POST',
+            body: JSON.stringify({ phone: normalizedPhone }),
+          });
+          // The token in this URL is what pairs the chat with the phone number, so
+          // opening the bare bot address instead would never complete the link.
+          window.open(link.url, '_blank', 'noopener,noreferrer');
+        } catch {
+          window.open(TELEGRAM_BOT_URL, '_blank', 'noopener,noreferrer');
+        }
+      } else {
+        setAwaitingApproval(false);
       }
       setStage('code');
     } catch (caught) {
@@ -194,6 +214,17 @@ export function LoginPage({ mode = 'login' }: { mode?: 'login' | 'register' }) {
                   className={`${fieldClass} tabular text-center text-lg tracking-[0.4em]`}
                 />
               </div>
+
+              {awaitingApproval ? (
+                <p
+                  role="status"
+                  className="rounded-control border border-border-strong bg-surface px-3 py-3 text-sm leading-relaxed"
+                >
+                  <strong>Langkah seterusnya dalam Telegram:</strong> tekan{' '}
+                  <em>Kongsi nombor telefon</em>, kemudian tunggu kelulusan admin HR. Kod OTP akan
+                  sampai di chat bot.
+                </p>
+              ) : null}
 
               {devCode ? (
                 <p className="rounded-control bg-warning-soft px-3 py-2 text-xs text-warning">

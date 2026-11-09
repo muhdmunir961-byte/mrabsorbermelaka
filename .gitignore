@@ -35,3 +35,10 @@ var/uploads/
 .coolify-token
 .coolify-generated-secrets
 .env.telegram.local
+
+# Wrangler (Cloudflare) local state and cache
+.wrangler/
+
+# Cloudflare API token (never commit)
+.cloudflare-token
+.cloudflare-account

@@ -96,6 +96,9 @@ if [[ -n "${TELEGRAM_BOT_USERNAME:-}" ]]; then post_env TELEGRAM_BOT_USERNAME "$
 if [[ -n "${TELEGRAM_WEBHOOK_SECRET:-}" ]]; then post_env TELEGRAM_WEBHOOK_SECRET "$TELEGRAM_WEBHOOK_SECRET"; fi
 if [[ -n "${TELEGRAM_WEBHOOK_URL:-}" ]]; then post_env TELEGRAM_WEBHOOK_URL "$TELEGRAM_WEBHOOK_URL"; fi
 if [[ -n "${TELEGRAM_APPROVAL_CHAT_ID:-}" ]]; then post_env TELEGRAM_APPROVAL_CHAT_ID "$TELEGRAM_APPROVAL_CHAT_ID"; fi
+# Telegram user ids allowed to approve a sign-in from the group chat. The group is
+# joined by invitation link, so membership alone must not grant approval rights.
+if [[ -n "${TELEGRAM_APPROVER_IDS:-}" ]]; then post_env TELEGRAM_APPROVER_IDS "$TELEGRAM_APPROVER_IDS"; fi
 
 unset COOLIFY_TOKEN DATABASE_URL
 printf 'Coolify environment variables sent for application %s.\n' "$APPLICATION_UUID"

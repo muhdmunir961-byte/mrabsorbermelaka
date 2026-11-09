@@ -20,8 +20,16 @@ for (const signal of ['SIGINT', 'SIGTERM'] as const) {
 try {
   await app.listen({ port: env.API_PORT, host: env.API_HOST });
   try {
-    await registerTelegramWebhook();
-    app.log.info('Telegram webhook registered');
+    const webhook = await registerTelegramWebhook();
+    if (webhook === 'registered') {
+      app.log.info('Telegram webhook registered');
+    } else {
+      // Said once, at startup, because a bot that never receives updates looks
+      // like a webhook bug later and this line is the difference.
+      app.log.warn(
+        'Telegram webhook skipped: TELEGRAM_BOT_TOKEN, TELEGRAM_WEBHOOK_SECRET and TELEGRAM_WEBHOOK_URL must all be set',
+      );
+    }
   } catch (error) {
     app.log.error({ err: error }, 'failed to register Telegram webhook');
   }

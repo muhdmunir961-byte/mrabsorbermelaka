@@ -3,6 +3,6 @@
   "compilerOptions": {
     "types": ["node"]
   },
-  "include": ["playwright.config.ts", "tests/**/*.ts"],
+  "include": ["playwright.config.ts", "tests/**/*.ts", "neon.ts", "hello.ts"],
   "exclude": ["node_modules", "apps", "packages", "dist"]
 }

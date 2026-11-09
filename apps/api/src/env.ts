@@ -83,6 +83,28 @@ const EnvSchema = z.object({
     .string()
     .regex(/^-?\d+$/)
     .optional(),
+  /**
+   * Comma-separated Telegram user ids allowed to approve a sign-in from the group
+   * chat. The group is a shared, invitation-linked space, so membership alone is
+   * not proof of being an administrator: without this list anyone who joined
+   * could approve their own request.
+   */
+  TELEGRAM_APPROVER_IDS: z
+    .string()
+    .optional()
+    .transform((value) =>
+      (value ?? '')
+        .split(',')
+        .map((id) => id.trim())
+        .filter((id) => id !== ''),
+    )
+    // A label pasted from a user-info bot ("ID: 123") parses into one entry that
+    // can never match a Telegram id, which would disable group approval silently.
+    // Refusing to start is louder and easier to fix.
+    .refine((ids) => ids.every((id) => /^\d+$/.test(id)), {
+      message:
+        'TELEGRAM_APPROVER_IDS must be comma-separated numeric Telegram user ids, e.g. 123456789,987654321',
+    }),
 });
 
 const parsed = EnvSchema.safeParse(process.env);

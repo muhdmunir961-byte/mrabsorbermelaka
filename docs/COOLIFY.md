@@ -54,6 +54,26 @@ Set these in Coolify when the resource uses `docker-compose.yml`:
 `OTP_EXPOSE_DEV_CODE` and `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` are already
 configured by the API image. Do not expose the OTP in production.
 
+### Telegram sign-in approval
+
+Sign-in through the bot is approved by a human, not automatically:
+
+| Variable                    | Purpose                                                               |
+| :-------------------------- | :-------------------------------------------------------------------- |
+| `TELEGRAM_APPROVAL_CHAT_ID` | Group chat that receives the "new sign-in request" card with buttons  |
+| `TELEGRAM_APPROVER_IDS`     | Comma-separated Telegram **user** ids allowed to press Luluskan/Tolak |
+
+`TELEGRAM_APPROVER_IDS` is not optional when approval happens in a group. The
+group is joined by invitation link, so anyone who joined could otherwise approve
+their own sign-in by entering a colleague's phone number. The allow list is the
+only thing that makes a group decision legitimate.
+
+Approval is also accepted from an `ADMIN_HR`/`OWNER` employee whose Telegram is
+linked, so HR can approve from their own chat without being listed.
+
+To find a Telegram user id, have the person press a button in the group once and
+read the id in the webhook log line for that callback.
+
 ### Preview deployments
 
 Use the same variables for preview deployments. Change `CORS_ORIGIN` to the
