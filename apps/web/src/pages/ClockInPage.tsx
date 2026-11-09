@@ -183,18 +183,6 @@ export function ClockInPage() {
           </div>
         ) : (
           <>
-            <div className="mt-6 flex justify-center">
-              <div
-                className="grid size-40 place-items-center rounded-full border-2 border-dashed border-border-strong"
-                role="img"
-                aria-label="Kamera tidak digunakan"
-              >
-                <p className="px-4 text-center text-xs text-ink-muted">
-                  Pengesahan wajah belum tersedia
-                </p>
-              </div>
-            </div>
-
             <div className="mt-6 space-y-3">
               <button
                 type="button"
