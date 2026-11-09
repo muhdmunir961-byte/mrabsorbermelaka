@@ -7,7 +7,7 @@ import type {
 } from '@mr/shared';
 import type { SessionUser } from '../../auth/session.js';
 import { ADMIN_ROLES } from '../../auth/guard.js';
-import { decryptField } from '../../crypto/field.js';
+import { decryptField, blindIndex, encryptField, encryptSen } from '../../crypto/field.js';
 import { conflict, forbidden, notFound, validationFailed } from '../../errors.js';
 import { employeeRepository as repo } from './repository.js';
 
@@ -105,6 +105,32 @@ export async function getProfile(
   };
 }
 
+/**
+ * Who may change whose record. An ADMIN_HR runs the floor day to day, but an
+ * OWNER outranks them: without this an HR admin could suspend or rename the owner
+ * and take the account over.
+ */
+export function assertMayManage(
+  actor: SessionUser,
+  target: { id: string; role: 'STAFF' | 'FOREMAN' | 'ADMIN_HR' | 'OWNER' },
+): void {
+  if (!ADMIN_ROLES.includes(actor.role)) throw forbidden();
+  if (target.role === 'OWNER' && actor.role !== 'OWNER') {
+    throw forbidden('Hanya OWNER boleh mengubah rekod OWNER');
+  }
+}
+
+/** Roles an actor is allowed to hand out. ADMIN_HR may not mint another OWNER. */
+export function assertMayAssignRole(
+  actor: SessionUser,
+  role: 'STAFF' | 'FOREMAN' | 'ADMIN_HR' | 'OWNER',
+): void {
+  if (!ADMIN_ROLES.includes(actor.role)) throw forbidden();
+  if ((role === 'OWNER' || role === 'ADMIN_HR') && actor.role !== 'OWNER') {
+    throw forbidden('Hanya OWNER boleh mencipta akaun ADMIN_HR atau OWNER');
+  }
+}
+
 export async function changeEmploymentStatus(
   approver: SessionUser,
   employeeId: string,
@@ -116,6 +142,8 @@ export async function changeEmploymentStatus(
 
   const current = await repo.findStatus(employeeId);
   if (!current) throw notFound('That employee does not exist');
+
+  assertMayManage(approver, { id: employeeId, role: current.role });
 
   if (current.status !== 'ACTIVE') {
     throw conflict(`That employee is already ${current.status.toLowerCase()}`);
@@ -142,7 +170,9 @@ export async function renameEmployee(
   employeeId: string,
   fullName: string,
 ): Promise<{ id: string; fullName: string }> {
-  if (!ADMIN_ROLES.includes(actor.role)) throw forbidden();
+  const target = await repo.findStatus(employeeId);
+  if (!target) throw notFound('That employee does not exist');
+  assertMayManage(actor, { id: employeeId, role: target.role });
 
   const name = fullName.trim().replace(/\s+/g, ' ');
   if (name.length < 3) {
@@ -153,4 +183,63 @@ export async function renameEmployee(
   }
 
   return repo.rename(employeeId, name);
+}
+
+/**
+ * Creates an employee from a phone, a name and a role, so HR can onboard someone
+ * without the web app. Identity number, address and salary are written as
+ * placeholders because the schema requires them; HR fills them in afterwards.
+ */
+export async function createEmployee(
+  actor: SessionUser,
+  input: {
+    phone: string;
+    fullName: string;
+    role: 'STAFF' | 'FOREMAN' | 'ADMIN_HR' | 'OWNER';
+    branchCode: 'MELAKA_UTAMA' | 'AYER_KEROH';
+  },
+): Promise<{ id: string; fullName: string; phone: string; role: string }> {
+  assertMayAssignRole(actor, input.role);
+
+  const name = input.fullName.trim().replace(/\s+/g, ' ');
+  if (name.length < 3) {
+    throw validationFailed([{ path: 'fullName', message: 'Nama terlalu pendek' }]);
+  }
+  if (name.length > 120) {
+    throw validationFailed([{ path: 'fullName', message: 'Nama terlalu panjang' }]);
+  }
+
+  const existing = await repo.findByPhone(input.phone);
+  if (existing) {
+    throw conflict(`Nombor ${input.phone} sudah didaftarkan untuk ${existing.fullName}`);
+  }
+
+  const branch = await repo.findBranchByCode(input.branchCode);
+  if (!branch) throw notFound(`Cawangan ${input.branchCode} tidak wujud`);
+
+  // Unique placeholder so the blind index does not collide between new records.
+  const placeholderIc = `000000-00-${input.phone.slice(-6)}`;
+  const identityCardIndex = blindIndex(placeholderIc);
+  const clash = await repo.findByIdentityIndex(identityCardIndex);
+  if (clash) {
+    throw conflict(
+      'Rekod placeholder bertembung; daftar pekerja ini melalui web dengan IC sebenar',
+    );
+  }
+
+  return repo.create({
+    fullName: name,
+    phone: input.phone,
+    role: input.role,
+    branchId: branch.id,
+    joinedOn: new Date(),
+    maritalStatus: 'Belum Dikemaskini',
+    emergencyContactName: 'Belum Dikemaskini',
+    identityCardEnc: encryptField(placeholderIc),
+    identityCardIndex,
+    addressEnc: encryptField('Belum Dikemaskini'),
+    emergencyContactPhoneEnc: encryptField(input.phone),
+    baseSalaryEnc: encryptSen(0),
+    hourlyRateEnc: encryptSen(0),
+  });
 }

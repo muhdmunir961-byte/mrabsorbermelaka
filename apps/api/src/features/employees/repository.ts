@@ -118,7 +118,7 @@ export const employeeRepository = {
   },
 
   findStatus(id: string) {
-    return prisma.employee.findUnique({ where: { id }, select: { status: true } });
+    return prisma.employee.findUnique({ where: { id }, select: { status: true, role: true } });
   },
 
   /** Used by the Telegram admin commands, which identify people by phone. */
@@ -157,6 +157,35 @@ export const employeeRepository = {
       orderBy: { fullName: 'asc' },
       take: limit,
       select: { id: true, fullName: true, phone: true, role: true, status: true },
+    });
+  },
+
+  findBranchByCode(code: 'MELAKA_UTAMA' | 'AYER_KEROH') {
+    return prisma.branch.findUnique({ where: { code }, select: { id: true } });
+  },
+
+  findByIdentityIndex(index: string) {
+    return prisma.employee.findFirst({ where: { identityCardIndex: index }, select: { id: true } });
+  },
+
+  create(data: {
+    fullName: string;
+    phone: string;
+    role: 'STAFF' | 'FOREMAN' | 'ADMIN_HR' | 'OWNER';
+    branchId: string;
+    joinedOn: Date;
+    maritalStatus: string;
+    emergencyContactName: string;
+    identityCardEnc: string;
+    identityCardIndex: string;
+    addressEnc: string;
+    emergencyContactPhoneEnc: string;
+    baseSalaryEnc: string;
+    hourlyRateEnc: string;
+  }) {
+    return prisma.employee.create({
+      data: { ...data, status: 'ACTIVE', leaveEntitlementDays: 21 },
+      select: { id: true, fullName: true, phone: true, role: true },
     });
   },
 };

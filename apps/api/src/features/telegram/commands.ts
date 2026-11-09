@@ -1,8 +1,10 @@
 import { normalizeMalaysianPhone } from '@mr/shared';
 import type { SessionUser } from '../../auth/session.js';
 import { AppError, conflict, notFound, validationFailed } from '../../errors.js';
-import { changeEmploymentStatus, renameEmployee } from '../employees/service.js';
+import { changeEmploymentStatus, createEmployee, renameEmployee } from '../employees/service.js';
 import { employeeRepository as employees } from '../employees/repository.js';
+
+const ROLES = ['STAFF', 'FOREMAN', 'ADMIN_HR', 'OWNER'] as const;
 
 /**
  * Admin commands an administrator can send the bot. They exist so HR can fix a
@@ -13,7 +15,14 @@ import { employeeRepository as employees } from '../employees/repository.js';
  * enough — the audit trail needs a person behind it.
  */
 
-export const ADMIN_COMMANDS = ['pekerja', 'nama', 'status', 'senarai', 'bantuan'] as const;
+export const ADMIN_COMMANDS = [
+  'pekerja',
+  'nama',
+  'status',
+  'daftar',
+  'senarai',
+  'bantuan',
+] as const;
 export type AdminCommand = (typeof ADMIN_COMMANDS)[number];
 
 export interface ParsedCommand {
@@ -38,6 +47,7 @@ export const HELP_TEXT = [
   '/pekerja <telefon> — lihat rekod pekerja',
   '/nama <telefon> <nama penuh> — betulkan nama',
   '/status <telefon> SUSPENDED|TERMINATED <sebab> — ubah status',
+  '/daftar <telefon> <STAFF|FOREMAN|ADMIN_HR|OWNER> <nama penuh> — daftar pekerja baharu',
   '/senarai — senarai pekerja aktif (20 pertama)',
 ].join('\n');
 
@@ -111,6 +121,33 @@ export async function runAdminCommand(
     if (!row) throw notFound(`Tiada pekerja dengan nombor ${phone}.`);
     const updated = await renameEmployee(actor, row.id, newName);
     return `Nama dikemas kini: ${updated.fullName} (${phone})`;
+  }
+
+  // /daftar <telefon> <peranan> <nama penuh>
+  if (parsed.command === 'daftar') {
+    const phone = requirePhone(parsed.args[0]);
+    const role = ROLES.find((value) => value === (parsed.args[1] ?? '').toUpperCase());
+    if (!role) {
+      throw validationFailed([{ path: 'peranan', message: `Guna ${ROLES.join(', ')}` }]);
+    }
+    const name = parsed.args.slice(2).join(' ').trim();
+    if (name === '') {
+      throw validationFailed([{ path: 'nama', message: 'Sertakan nama penuh' }]);
+    }
+    const created = await createEmployee(actor, {
+      phone,
+      fullName: name,
+      role,
+      branchCode: 'MELAKA_UTAMA',
+    });
+    return [
+      `Pekerja didaftarkan: ${created.fullName}`,
+      `Telefon: ${created.phone}`,
+      `Peranan: ${created.role}`,
+      '',
+      'Nota: IC, alamat dan gaji ialah placeholder — kemas kini melalui HR.',
+      'Orang ini boleh terus daftar masuk melalui bot.',
+    ].join('\n');
   }
 
   // /status <telefon> SUSPENDED|TERMINATED <sebab>
