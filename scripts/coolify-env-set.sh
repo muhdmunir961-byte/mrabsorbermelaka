@@ -2,7 +2,10 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-COOLIFY_URL="${COOLIFY_URL:-http://43.134.91.79:8000}"
+# Deliberately not COOLIFY_URL: that name is already used by unrelated hosting
+# environments (this workspace exports a code-server URL under it), and inheriting
+# that value silently points every API call at the wrong host.
+COOLIFY_BASE_URL="${COOLIFY_BASE_URL:-http://43.134.91.79:8000}"
 APPLICATION_UUID="${APPLICATION_UUID:-yx4rfdlwu6sejtwyfswmkebq}"
 TOKEN_FILE="$ROOT_DIR/.coolify-token"
 
@@ -57,7 +60,7 @@ read_secret() {
   awk -F= -v key="$name" '$1 == key {sub(/^[^=]*=/, ""); print; exit}' "$SECRET_FILE"
 }
 
-API_URL="$COOLIFY_URL/api/v1/applications/$APPLICATION_UUID/envs"
+API_URL="$COOLIFY_BASE_URL/api/v1/applications/$APPLICATION_UUID/envs"
 ENV_LIST="$(curl --fail-with-body --silent --show-error \
   --request GET "$API_URL" \
   --header "Authorization: Bearer $COOLIFY_TOKEN")"
@@ -85,7 +88,7 @@ post_env DATABASE_URL "$DATABASE_URL"
 post_env SESSION_SECRET "$(read_secret SESSION_SECRET)"
 post_env FIELD_ENCRYPTION_KEY "$(read_secret FIELD_ENCRYPTION_KEY)"
 post_env FIELD_INDEX_KEY "$(read_secret FIELD_INDEX_KEY)"
-post_env CORS_ORIGIN 'https://mrabsorbermelaka.biz.id'
+post_env CORS_ORIGIN 'https://mrabsorbermelaka.pages.dev,https://mrabsorbermelaka.biz.id'
 post_env NODE_ENV production
 post_env API_HOST 0.0.0.0
 post_env API_PORT 4000

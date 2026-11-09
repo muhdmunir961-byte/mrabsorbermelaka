@@ -188,13 +188,15 @@ export async function notifyLoginApprovers(
   ];
   if (targets.length === 0) return { approvers: 0, delivered: 0 };
 
-  const who = fullName ?? 'Nombor tidak berdaftar';
+  const who = fullName ? `Nama: ${fullName}` : 'Nombor ini BELUM didaftarkan dalam HR';
   const text = [
     'Permintaan masuk baharu',
-    `Nama: ${who}`,
+    who,
     `Telefon: ${phone}`,
     '',
-    'Hanya admin yang disenaraikan boleh meluluskan, walaupun butang ini kelihatan kepada semua ahli group.',
+    fullName
+      ? 'Hanya admin yang disenaraikan boleh meluluskan, walaupun butang ini kelihatan kepada semua ahli group.'
+      : 'Daftarkan pekerja ini dahulu, kemudian tekan Luluskan. Meluluskan sekarang akan gagal kerana tiada rekod pekerja.',
   ].join('\n');
 
   const replyMarkup = {

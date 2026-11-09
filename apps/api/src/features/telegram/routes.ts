@@ -118,18 +118,26 @@ export const telegramRoutes: FastifyPluginAsync = async (app) => {
       } catch (error) {
         // A refused decision is not a server fault, and Telegram retries every
         // non-2xx: answering 200 with a message ends the retries and tells the
-        // person why. The id is logged because it is what the allow list needs.
-        if (error instanceof AppError && error.code === 'CONFLICT') {
+        // person why. CONFLICT is "you are not an approver", NOT_FOUND is "this
+        // number has no employee record" — both need a reply, not a retry loop.
+        if (
+          error instanceof AppError &&
+          (error.code === 'CONFLICT' || error.code === 'NOT_FOUND')
+        ) {
           request.log.warn(
-            { telegramUserId: approverId },
-            'login approval refused: this Telegram id is not an allowed approver',
+            { telegramUserId: approverId, code: error.code },
+            'login approval could not be applied',
           );
           await sendReply(
             request,
             approverId,
-            'Anda bukan admin yang dibenarkan untuk meluluskan permintaan ini. Beritahu HR untuk menambah ID Telegram anda.',
+            error.code === 'CONFLICT'
+              ? 'Anda bukan admin yang dibenarkan untuk meluluskan permintaan ini. Beritahu HR untuk menambah ID Telegram anda.'
+              : error.message,
           );
-          return { status: 'not_an_approver' };
+          return {
+            status: error.code === 'CONFLICT' ? 'not_an_approver' : 'request_not_actionable',
+          };
         }
         throw error;
       }
