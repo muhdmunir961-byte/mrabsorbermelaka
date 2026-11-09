@@ -146,6 +146,13 @@ export function FaceSetupPage() {
         </p>
       </header>
 
+      {/* Clock-in by face is refused by the API on this deployment, so say it here
+          instead of letting someone enrol a photo and then hit the error later. */}
+      <p className="rounded-control bg-warning-soft px-3 py-2 text-sm text-warning">
+        Pengesahan wajah belum diaktifkan pada pelayan ini. Untuk merekod kehadiran sekarang,
+        gunakan <strong>Kod PIN</strong> di halaman Kehadiran.
+      </p>
+
       <section className="rounded-panel border border-border bg-surface p-4">
         <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">Status</p>
         <p className="mt-1 text-sm">
