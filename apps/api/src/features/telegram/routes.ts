@@ -5,6 +5,7 @@ import { normalizeMalaysianPhone } from '@mr/shared';
 import { ADMIN_ROLES, currentUser, requireRole } from '../../auth/guard.js';
 import { AppError } from '../../errors.js';
 import { parseInput } from '../../validate.js';
+import { describeCommandError, parseCommand, runAdminCommand } from './commands.js';
 import {
   createTelegramLink,
   createTelegramLinkForPhone,
@@ -213,6 +214,25 @@ export const telegramRoutes: FastifyPluginAsync = async (app) => {
               : 'login_pending_approval',
       };
     }
+    // Admin commands. Checked before /start so a command never falls through to
+    // the sign-in flow; /start itself is not in the command list.
+    const command = parseCommand(text);
+    if (command && update.message) {
+      const fromId = String(update.message.from.id);
+      try {
+        const answer = await runAdminCommand(fromId, command);
+        await sendReply(request, fromId, answer);
+        return { status: 'command_ok', command: command.command };
+      } catch (error) {
+        request.log.warn(
+          { telegramUserId: fromId, command: command.command, err: error },
+          'admin command failed',
+        );
+        await sendReply(request, fromId, describeCommandError(error));
+        return { status: 'command_failed', command: command.command };
+      }
+    }
+
     if (text.startsWith('/start ')) {
       const token = text.slice('/start '.length).trim();
       if (!token || !update.message) return { status: 'ignored' };
@@ -244,7 +264,7 @@ export const telegramRoutes: FastifyPluginAsync = async (app) => {
       await sendReply(
         request,
         String(update.message?.from.id),
-        'Selamat datang ke Mr. Absorber HR.\n\nTekan butang di bawah untuk kongsi nombor telefon anda sendiri. Permintaan akan dihantar kepada admin HR untuk kelulusan, kemudian kod masuk dihantar di sini.',
+        'Selamat datang ke Mr. Absorber HR.\n\nTekan butang di bawah untuk kongsi nombor telefon anda sendiri. Permintaan akan dihantar kepada admin HR untuk kelulusan, kemudian kod masuk dihantar di sini.\n\nAdmin HR: taip /bantuan untuk arahan pengurusan pekerja.',
         {
           keyboard: [[{ text: 'Kongsi nombor telefon', request_contact: true }]],
           one_time_keyboard: true,

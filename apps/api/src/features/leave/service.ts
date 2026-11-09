@@ -115,7 +115,14 @@ async function submit(employee: Employee, args: SubmitArgs): Promise<LeaveSubmis
     `Permohonan ${args.type} baharu\nPekerja: ${employee.fullName}\nTarikh: ${args.startDate} hingga ${args.endDate}\nHari: ${days}\nSebab: ${args.reason}`,
   );
   void notifyMonitoringGroup(
-    `Permohonan ${args.type} baharu\nPekerja: ${employee.fullName}\nTarikh: ${args.startDate} hingga ${args.endDate}\nHari: ${days}`,
+    [
+      `Permohonan ${args.type} baharu`,
+      `Pekerja: ${employee.fullName}`,
+      `Tarikh: ${args.startDate} hingga ${args.endDate} (${days} hari)`,
+      // The reason is the main thing a reader judges the request by, so it belongs
+      // in the group copy too, not only in the approver's private message.
+      `Sebab: ${args.reason}`,
+    ].join('\n'),
   );
 
   return {
@@ -217,8 +224,18 @@ async function decideOne(
   });
 
   if (!updated) throw conflict('That request was already decided by someone else');
+  const note = input.note?.trim();
   void notifyMonitoringGroup(
-    `Permohonan ${request.type} ${input.decision === 'APPROVE' ? 'diluluskan' : 'ditolak'}\nPekerja: ${request.employee.fullName}\nOleh: ${approver.fullName}`,
+    [
+      `Permohonan ${request.type} ${input.decision === 'APPROVE' ? 'DILULUSKAN' : 'DITOLAK'}`,
+      `Pekerja: ${request.employee.fullName}`,
+      `Tarikh: ${request.startDate.toISOString().slice(0, 10)} hingga ${request.endDate
+        .toISOString()
+        .slice(0, 10)} (${request.days} hari)`,
+      `Sebab permohonan: ${request.reason}`,
+      `Oleh: ${approver.fullName}`,
+      ...(note ? [`Nota: ${note}`] : []),
+    ].join('\n'),
   );
   return toLeaveRequest(updated);
 }

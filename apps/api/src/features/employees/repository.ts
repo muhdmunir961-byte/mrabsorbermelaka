@@ -120,4 +120,43 @@ export const employeeRepository = {
   findStatus(id: string) {
     return prisma.employee.findUnique({ where: { id }, select: { status: true } });
   },
+
+  /** Used by the Telegram admin commands, which identify people by phone. */
+  findByPhone(phone: string) {
+    return prisma.employee.findUnique({
+      where: { phone },
+      select: {
+        id: true,
+        fullName: true,
+        phone: true,
+        role: true,
+        status: true,
+        telegramUserId: true,
+      },
+    });
+  },
+
+  /** Identifies the person behind a Telegram chat, for admin commands. */
+  findByTelegramId(telegramUserId: string) {
+    return prisma.employee.findUnique({
+      where: { telegramUserId },
+      select: { id: true, fullName: true, role: true, status: true },
+    });
+  },
+
+  rename(id: string, fullName: string) {
+    return prisma.employee.update({
+      where: { id },
+      data: { fullName },
+      select: { id: true, fullName: true },
+    });
+  },
+
+  listForAdmin(limit: number) {
+    return prisma.employee.findMany({
+      orderBy: { fullName: 'asc' },
+      take: limit,
+      select: { id: true, fullName: true, phone: true, role: true, status: true },
+    });
+  },
 };

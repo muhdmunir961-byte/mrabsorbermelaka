@@ -6,8 +6,9 @@ import type {
   Page,
 } from '@mr/shared';
 import type { SessionUser } from '../../auth/session.js';
+import { ADMIN_ROLES } from '../../auth/guard.js';
 import { decryptField } from '../../crypto/field.js';
-import { conflict, forbidden, notFound } from '../../errors.js';
+import { conflict, forbidden, notFound, validationFailed } from '../../errors.js';
 import { employeeRepository as repo } from './repository.js';
 
 export async function listDirectory(query: EmployeeDirectoryQuery): Promise<Page<EmployeeSummary>> {
@@ -129,4 +130,27 @@ export async function changeEmploymentStatus(
   if (!changed) throw conflict('That employee changed status a moment ago; reload and retry');
 
   return { id: employeeId, status: input.status };
+}
+
+/**
+ * Corrects a misspelled or outdated name. Kept here rather than in the Telegram
+ * module so the rule that only HR/owner may edit an employee record lives with the
+ * rest of the employee rules.
+ */
+export async function renameEmployee(
+  actor: SessionUser,
+  employeeId: string,
+  fullName: string,
+): Promise<{ id: string; fullName: string }> {
+  if (!ADMIN_ROLES.includes(actor.role)) throw forbidden();
+
+  const name = fullName.trim().replace(/\s+/g, ' ');
+  if (name.length < 3) {
+    throw validationFailed([{ path: 'fullName', message: 'Nama terlalu pendek' }]);
+  }
+  if (name.length > 120) {
+    throw validationFailed([{ path: 'fullName', message: 'Nama terlalu panjang' }]);
+  }
+
+  return repo.rename(employeeId, name);
 }
